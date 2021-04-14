@@ -1,0 +1,4351 @@
+variables
+{
+	global:
+		0: introduction_string
+		1: challenger_win_condition
+		2: boss_win_condition
+		3: players_vote_for_boss
+		4: next_boss
+		5: players_can_see_introduction
+		9: challenger_players_num
+		10: challenger_player_index
+		11: challenger_player_i
+		12: create_dummy_index
+		15: dummy_name1
+		16: rob_operations
+		17: host
+		18: server_time_count
+		19: boss_choosing_hero
+		20: boss_choosing_hero_index
+		22: boss_warning_word_hud
+		23: current_boss
+		24: directions_4
+		25: directions_8
+		26: boss_dummy_resp_point
+		27: positions_beside_boss
+		28: boss_available_heroes
+		29: direction_12
+		30: all_players_1
+		31: sigma_using_ultm
+		32: inspec_log
+		33: boss_dummy_robots
+		34: ana_using_ultm
+		35: boss_dummy_index
+		36: sym_using_ultm
+		38: boss_took_damage
+		39: boss_dummy_q_position
+		40: ready_time_count
+		41: health_times
+		42: health_i
+		43: max_health
+		45: dva_string
+		46: dva_string_color
+		47: diagnal_distance
+		48: diagnal_distance_divid_2
+		49: effect_sym_a2_position2
+		50: effect_sym_a2_position1
+		51: effect_sym_a2_id1
+		52: effect_sym_a2_id2
+		53: sym_a2_hud_d1
+		54: sym_a2_hud_d2
+
+	player:
+		3: introduction_closed
+		4: my_hero
+		5: vote
+		6: first_person
+		7: boss_choosing_hero
+		8: boddy_size
+		14: facing_direction
+		16: my_positon
+		17: time_count1
+		18: boss_using_ultim
+		19: boss_using_a1
+		20: boss_using_a2
+		21: boss_using_pr
+		22: boss_using_se
+		23: eye_height
+		24: target_player
+		25: i1
+		27: player_i
+		30: beam_effect_id1
+		31: beam_effect_id2
+		32: world_txt_id1
+		35: mark1
+		36: echo_time_count_hud
+		37: echo_heroes_hud
+		41: sigma_ultm_hud_id
+		42: target_positoin
+		46: ana_nano_effect_id
+		47: other_mark
+		50: dummy_button
+		51: boss_dummy_angle
+		53: distance_to_closest
+		54: closest_player
+		58: effect_sym_a2_id1
+		61: effect_sym_a2_id2
+}
+
+subroutines
+{
+	0: disallow_buttons
+	1: allow_buttons
+	2: reinitial_player
+	3: detect_boss_leave_match
+	4: get_challenger_players_num
+	5: add_challenger_robots
+	6: create_global_hud
+	7: clear_boss_dummy
+	8: create_heroes_introduction
+	9: rein_shift_trace
+	11: add_health_pool
+}
+
+disabled rule("数据监视")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	actions
+	{
+		disabled Create HUD Text(Event Player, Custom String("shift:{0}", Is Using Ability 1(Event Player)), Null, Null, Right, 0, Color(White),
+			Color(White), Color(White), Visible To and String, Default Visibility);
+		disabled Create HUD Text(Event Player, Custom String("E:{0}", Is Using Ability 2(Event Player)), Null, Null, Right, 0, Color(White), Color(
+			White), Color(White), Visible To and String, Default Visibility);
+		disabled Create HUD Text(Event Player, Custom String("Q:{0}", Is Using Ultimate(Event Player)), Null, Null, Right, 0, Color(White), Color(
+			White), Color(White), Visible To and String, Default Visibility);
+		disabled Create HUD Text(Event Player, Custom String("蹲:{0}", Is Crouching(Event Player)), Null, Null, Right, 0, Color(White), Color(White),
+			Color(White), Visible To and String, Default Visibility);
+		disabled Create HUD Text(Event Player, Custom String("jump:{0}", Is Jumping(Event Player)), Null, Null, Right, 0, Color(White), Color(
+			White), Color(White), Visible To and String, Default Visibility);
+		disabled Create HUD Text(Event Player, Custom String("left mouse:{0}", Is Firing Primary(Event Player)), Null, Null, Right, 0, Color(White),
+			Color(White), Color(White), Visible To and String, Default Visibility);
+		disabled Create HUD Text(Event Player, Custom String("right mouse:{0}", Is Firing Secondary(Event Player)), Null, Null, Right, 0, Color(
+			White), Color(White), Color(White), Visible To and String, Default Visibility);
+		disabled Create HUD Text(Event Player, Custom String("right resource:{0}", Ability Resource(Event Player, Button(Secondary Fire))), Null,
+			Null, Right, 0, Color(White), Color(White), Color(White), Visible To and String, Default Visibility);
+		Create HUD Text(Event Player, Custom String("throt:{0}", Throttle Of(Event Player)), Null, Null, Right, 0, Color(White), Color(
+			White), Color(White), Visible To and String, Default Visibility);
+		Create HUD Text(Event Player, Custom String("velocity:{0}", Velocity Of(Event Player)), Null, Null, Right, 0, Color(White), Color(
+			White), Color(White), Visible To and String, Default Visibility);
+		disabled Create HUD Text(Event Player, Custom String("speed:{0}", Speed Of(Event Player)), Null, Null, Right, 0, Color(White), Color(White),
+			Color(White), Visible To and String, Default Visibility);
+		Create HUD Text(Event Player, Custom String("position:{0}", Position Of(Event Player)), Null, Null, Right, 0, Color(White), Color(
+			White), Color(White), Visible To and String, Default Visibility);
+		disabled Create HUD Text(Event Player, Custom String("direction:{0}, sub:{1}, divide:{2}", Normalize(Vector(1, 1, 1) / (Left * (
+			Event Player - Vector(-20, 0, 0)))), Event Player - Vector(-20, 0, 0), Vector(1, 1, 1) / (Left * (Event Player - Vector(-20, 0,
+			0)))), Null, Null, Right, 0, Color(White), Color(White), Color(White), Visible To and String, Default Visibility);
+	}
+}
+
+rule("关闭日志")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Host Player == Event Player;
+		Is Button Held(Event Player, Button(Interact)) == True;
+		Is Button Held(Event Player, Button(Primary Fire)) == True;
+	}
+
+	actions
+	{
+		Wait(1, Ignore Condition);
+		If(Is Button Held(Event Player, Button(Primary Fire)) && Is Button Held(Event Player, Button(Interact)));
+			If(Global.inspec_log);
+				Big Message(Event Player, Custom String("关闭日志"));
+				Disable Inspector Recording;
+				Global.inspec_log = False;
+			Else;
+				Big Message(Event Player, Custom String("开启日志"));
+				Enable Inspector Recording;
+				Global.inspec_log = True;
+			End;
+		End;
+	}
+}
+
+rule("调整比赛时间")
+{
+	event
+	{
+		Ongoing - Global;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Match Time <= 900;
+	}
+
+	actions
+	{
+		Set Match Time(3599);
+	}
+}
+
+rule("跳过准备")
+{
+	event
+	{
+		Ongoing - Global;
+	}
+
+	conditions
+	{
+		Is Assembling Heroes == True;
+	}
+
+	actions
+	{
+		disabled Set Match Time(5);
+		Set Match Time(10);
+	}
+}
+
+rule("create heroes introduction")
+{
+	event
+	{
+		Subroutine;
+		create_heroes_introduction;
+	}
+
+	actions
+	{
+		Create In-World Text(All Players(All Teams), Custom String("BOSS"), Global.current_boss + Vector(0, 2, 0), 4,
+			Clip Against Surfaces, Visible To Position and String, Color(Red), Default Visibility);
+		Create HUD Text(All Players(All Teams), Custom String("BOSS血量:{0}/{1}——终极技能:{2}%", Health(Global.current_boss), Max Health(
+			Global.current_boss), Ultimate Charge Percent(Global.current_boss)), Null, Null, Top, 0, Color(Red), Color(White), Color(
+			White), Visible To and String, Default Visibility);
+		Create In-World Text(All Players(All Teams), Custom String("{0}{1}", Custom String(
+			"TIPS：1. 所有boss的大招均无视控制（例如即使被眩晕也能放大）。\r\n2. boss：被控制时会不断的增加终极技能充能；所有分身都是无敌状态。\r\n"), Custom String(
+			"3. 挑战者：某些英雄极具战略意义（例如西格玛，奥丽莎，和尚，安娜等）。\r\n4. 内鬼：某个会隐身的英雄，能给boss加某些buff，内鬼无法胜利，主要就是快乐。\r\n5. 本游戏正在测试中，游戏体验可能会很差，也会有很多bug，感谢每一位加入的玩家。")),
+			Vector(20, 50, 20), 2, Do Not Clip, Visible To Position and String, Color(Yellow), Default Visibility);
+		Create In-World Text(Players On Hero(Hero(Reinhardt), Team 2), Custom String(
+			"大风车大风车吱呀吱哟哟地转：左键右键召唤分身360°无死角释放\r\n月牙天冲plus：E召唤分身向扇形范围内释放E\r\n全军突击！！！：shift召唤分身同时冲锋，撞墙后晕倒\r\n这就是十字军：Q召唤分身同时使用大招，之后一起冲锋三人称，不然容易眼晕"),
+			Vector(0, 100, 0), 2, Do Not Clip, Visible To Position and String, Color(White), Default Visibility);
+		Create In-World Text(Players On Hero(Hero(D.Va), Team 2), Custom String("{0}{1}", Custom String(
+			"过载（被动技能）：间歇性的在原地留下一枚核弹\r\n模式切换：ctrl切换核聚变模式与核裂变模式，当前模式提示在屏幕上方。\r\n核裂变：使用任何技能时，召唤分身"), Custom String(
+			"向扇形范围内同时释放技能\r\n核聚变：使用任何技能时，召唤分身向准星指定位置同时释放技能\r\n世界核平：使用终极技能后，根据核模式向指定方向释放10枚核弹\r\n提示：使用右键时看不见分身的右键效果，但它确实存在且有效，机甲被毁则游戏结束\r\n核平就完事了嗷")),
+			Vector(0, 100, 0), 2, Do Not Clip, Visible To Position and String, Color(White), Default Visibility);
+		Create In-World Text(Players On Hero(Hero(Reaper), Team 1), Custom String("饥渴（吸血强化）\r\n扫地机器人（大招加速）\r\n死亡之舞（大招全图伤害）"),
+			Global.boss_dummy_resp_point, 2, Do Not Clip, Visible To Position and String, Color(White), Default Visibility);
+		Create In-World Text(Players On Hero(Hero(Tracer), Team 1), Custom String("炸弹大甩卖（无限大招）\r\n自动回避（当你被boss瞄准后自动向左侧或右侧闪现）"),
+			Global.boss_dummy_resp_point, 2, Do Not Clip, Visible To Position and String, Color(White), Default Visibility);
+		Create In-World Text(Players On Hero(Hero(Mercy), Team 1), Custom String("空间契约·交换（E技能和boss交换位置，期间无敌）"),
+			Global.boss_dummy_resp_point, 2, Do Not Clip, Visible To Position and String, Color(White), Default Visibility);
+		Create In-World Text(Players On Hero(Hero(Hanzo), Team 1), Custom String("龙x3（大招自动释放三条龙，期间无敌）"), Global.boss_dummy_resp_point, 2,
+			Do Not Clip, Visible To Position and String, Color(White), Default Visibility);
+		Create In-World Text(Players On Hero(Hero(Torbjörn), Team 1), Custom String("地板烫jio（无限大招）\r\n小短腿的极限（E技能期间加速）"),
+			Global.boss_dummy_resp_point, 2, Do Not Clip, Visible To Position and String, Color(White), Default Visibility);
+		Create In-World Text(Players On Hero(Hero(Reinhardt), Team 1), Custom String("逮虾户（冲锋时右键加速，E键倒车）\r\n大力出奇迹（大招范围无限，无视boss屏障）"),
+			Global.boss_dummy_resp_point, 2, Do Not Clip, Visible To Position and String, Color(White), Default Visibility);
+		Create In-World Text(Players On Hero(Hero(Pharah), Team 1), Custom String("弹药补给（脚挨着地时刷新大招）"), Global.boss_dummy_resp_point, 2,
+			Do Not Clip, Visible To Position and String, Color(White), Default Visibility);
+		Create In-World Text(Players On Hero(Hero(Winston), Team 1), Custom String("绝对不会倒下（大招期间锁血）\r\n危机预警（boss放大招的瞬间若终极技能可用则自动释放）"),
+			Global.boss_dummy_resp_point, 2, Do Not Clip, Visible To Position and String, Color(White), Default Visibility);
+		Create In-World Text(Players On Hero(Hero(Widowmaker), Team 1), Custom String("机械臂战士（开镜一帧锁头）\r\n鹰眼（爆头伤害强化）\r\n移速强化"),
+			Global.boss_dummy_resp_point, 2, Do Not Clip, Visible To Position and String, Color(White), Default Visibility);
+		Create In-World Text(Players On Hero(Hero(Bastion), Team 1), Custom String("移动堡垒（坐下后近战前进）\r\n火力全开（伤害大幅增加）"),
+			Global.boss_dummy_resp_point, 2, Do Not Clip, Visible To Position and String, Color(White), Default Visibility);
+		Create In-World Text(Players On Hero(Hero(Symmetra), Team 1), Custom String(
+			"十字境界线（使用大招后在地图中留下两条境界线）\r\nBOSS触碰境界线后会被弹开，包括boss分身\r\n传送法阵（E，操作过程与阿三平时的E相同，但每次传送后都要等一会才能开始下次传送）"),
+			Global.boss_dummy_resp_point, 2, Do Not Clip, Visible To Position and String, Color(White), Default Visibility);
+		Create In-World Text(Players On Hero(Hero(Zenyatta), Team 1), Custom String("遁入虚空（终极技能期间,使所有队友无敌）\r\n你不要过来啊！！！（近战踢走boss）"),
+			Global.boss_dummy_resp_point, 2, Do Not Clip, Visible To Position and String, Color(White), Default Visibility);
+		Create In-World Text(Players On Hero(Hero(Genji), Team 1), Custom String("加特林手里剑（左键按一次即可, 近战取消释放）\r\n泣血之刃（伤害强化，大招期间减伤，大招吸血）\r\n"),
+			Global.boss_dummy_resp_point, 2, Do Not Clip, Visible To Position and String, Color(White), Default Visibility);
+		Create In-World Text(Players On Hero(Hero(Roadhog), Team 1), Custom String("起飞！！！（大招加速且自瞄）"), Global.boss_dummy_resp_point, 2,
+			Do Not Clip, Visible To Position and String, Color(White), Default Visibility);
+		Create In-World Text(Players On Hero(Hero(McCree), Team 1), Custom String("一个筋斗十万八千里（shift距离极远）\r\n西部快枪手（开大后走的很快）"),
+			Global.boss_dummy_resp_point, 2, Do Not Clip, Visible To Position and String, Color(White), Default Visibility);
+		Create In-World Text(Players On Hero(Hero(Junkrat), Team 1), Custom String("用阳寿来夹boss(使用E后将boss传送到你身上)"),
+			Global.boss_dummy_resp_point, 2, Do Not Clip, Visible To Position and String, Color(White), Default Visibility);
+		Create In-World Text(Players On Hero(Hero(Zarya), Team 1), Custom String("先天霸体（全自动shift）"), Global.boss_dummy_resp_point, 2,
+			Do Not Clip, Visible To Position and String, Color(White), Default Visibility);
+		Create In-World Text(Players On Hero(Hero(Soldier: 76), Team 1), Custom String("没啥特别的，但你的伤害是所有英雄里最高的"),
+			Global.boss_dummy_resp_point, 2, Do Not Clip, Visible To Position and String, Color(White), Default Visibility);
+		Create In-World Text(Players On Hero(Hero(Lúcio), Team 1), Custom String("远古DJ（治愈光环全覆盖）\r\n超级加倍（加速时按E极限加速，仅对自己有效）"),
+			Global.boss_dummy_resp_point, 2, Do Not Clip, Visible To Position and String, Color(White), Default Visibility);
+		Create In-World Text(Players On Hero(Hero(D.Va), Team 1), Custom String("核爆神曲（无限大招）"), Global.boss_dummy_resp_point, 2,
+			Do Not Clip, Visible To Position and String, Color(White), Default Visibility);
+		Create In-World Text(Players On Hero(Hero(Mei), Team 1), Custom String("溜冰鞋（向下看，按左键，走起加速）\r\n新型鬼畜武器（大招期间造成任何伤害都能鬼畜boss）"),
+			Global.boss_dummy_resp_point, 2, Do Not Clip, Visible To Position and String, Color(White), Default Visibility);
+		Create In-World Text(Players On Hero(Hero(Sombra), Team 1), Custom String(
+			"光学迷彩（全程隐身，boss看不见你，但你无法受到任何治疗）\r\n捣蛋鬼（右键或大招侵入boss后，为boss添加buff）\r\nbuff列表：大锤——加速\r\n                DVA——自瞄", String("")),
+			Global.boss_dummy_resp_point, 2, Do Not Clip, Visible To Position and String, Color(White), Default Visibility);
+		Create In-World Text(Players On Hero(Hero(Doomfist), Team 1), Custom String("连击的艺术（造成伤害后取消技能后摇，手速快就很帅）"),
+			Global.boss_dummy_resp_point, 2, Do Not Clip, Visible To Position and String, Color(White), Default Visibility);
+		Create In-World Text(Players On Hero(Hero(Ana), Team 1), Custom String("睡眠质量金（大招期间队友造成任何伤害都能沉睡boss）"),
+			Global.boss_dummy_resp_point, 2, Do Not Clip, Visible To Position and String, Color(White), Default Visibility);
+		Create In-World Text(Players On Hero(Hero(Orisa), Team 1), Custom String("永久金身（全自动shift）\r\n放心有我在（大招期间赋予所有队友无敌状态）"),
+			Global.boss_dummy_resp_point, 2, Do Not Clip, Visible To Position and String, Color(White), Default Visibility);
+		Create In-World Text(Players On Hero(Hero(Brigitte), Team 1), Custom String("无限盾击（大招期间，盾击CD清零）\r\n理论上的无限盾击（shift命中敌人清零盾击CD）"),
+			Global.boss_dummy_resp_point, 2, Do Not Clip, Visible To Position and String, Color(White), Default Visibility);
+		Create In-World Text(Players On Hero(Hero(Moira), Team 1), Custom String("吸星大法（大招期间造成伤害吸收boss的终极技能充能并分享给所有队友）"),
+			Global.boss_dummy_resp_point, 2, Do Not Clip, Visible To Position and String, Color(White), Default Visibility);
+		Create In-World Text(Players On Hero(Hero(Wrecking Ball), Team 1), Custom String("先天蓝buff（全自动E）\r\n仓鼠杂技（按蹲直接下压）"),
+			Global.boss_dummy_resp_point, 2, Do Not Clip, Visible To Position and String, Color(White), Default Visibility);
+		Create In-World Text(Players On Hero(Hero(Ashe), Team 1), Custom String("炸弹大甩卖（无限E，按着不松）\r\n避火珠（无视自己炸弹伤害）"),
+			Global.boss_dummy_resp_point, 2, Do Not Clip, Visible To Position and String, Color(White), Default Visibility);
+		Create In-World Text(Players On Hero(Hero(Echo), Team 1), Custom String(
+			"无限右键（近战停止释放）\r\n完美复制（右上角有英雄菜单和复制计时器，蹲和跳切换英雄图标，使用大招即可复制）\r\n复制并超越（无论复制的是谁，都有无限大招）"), Global.boss_dummy_resp_point, 2,
+			Do Not Clip, Visible To Position and String, Color(White), Default Visibility);
+		Create In-World Text(Players On Hero(Hero(Baptiste), Team 1), Custom String("76就是个小巴蒂（左键自瞄）"), Global.boss_dummy_resp_point, 2,
+			Do Not Clip, Visible To Position and String, Color(White), Default Visibility);
+		Create In-World Text(Players On Hero(Hero(Sigma), Team 1), Custom String("无重力领域（大招使友方所有人失去重力，跳和蹲控制上下）"),
+			Global.boss_dummy_resp_point, 2, Do Not Clip, Visible To Position and String, Color(White), Default Visibility);
+		Create HUD Text(Players On Hero(Hero(D.Va), Team 2), Custom String("当前模式：{0}", Global.dva_string), Null, Null, Top, 0,
+			Global.dva_string_color, Color(White), Color(White), Visible To String and Color, Default Visibility);
+	}
+}
+
+rule("全局变量赋值")
+{
+	event
+	{
+		Ongoing - Global;
+	}
+
+	actions
+	{
+		Global.challenger_win_condition = 1;
+		Global.boss_win_condition = 50 * Global.challenger_win_condition;
+		Global.introduction_string = Custom String(
+			"挑战者获胜条件:限定时间内获得{0}分\r\nBOSS获胜条件:限定时间内获得{1}分\r\n长按2s互动键(F或G)关闭此提示\r\n英雄特技和重要提示在房顶,不看后悔\r\n按R切换第一/第三人称视角",
+			Global.challenger_win_condition, Global.boss_win_condition);
+		Global.players_vote_for_boss = Array();
+		Global.next_boss = False;
+		Call Subroutine(create_global_hud);
+		Global.dummy_name1 = Array(Custom String("梦在深巷"), Custom String("暧昧伤人"), Custom String("你的名字还不够惊悚"), Custom String("寂寞倾诉"),
+			Custom String("微微一笑很得劲"), Custom String("简单的名字"), Custom String("第二个夏季"), Custom String("灭世刑罚"), Custom String("大石头"),
+			Custom String("梦幻之翼"), Custom String("清幽无名"), Custom String("做一个神话"));
+		Global.rob_operations = Array(Button(Primary Fire), Button(Secondary Fire), Button(Ability 1), Button(Ability 2));
+		disabled Global.rob_operations = Array(Button(Primary Fire), Button(Secondary Fire), Button(Ability 1), Button(Ability 2), Button(Ultimate),
+			Button(Interact));
+		Global.host = True;
+		Global.boss_choosing_hero = False;
+		Global.boss_choosing_hero_index = 0;
+		Global.boss_warning_word_hud = False;
+		Global.directions_4 = Array(Forward, Backward, Left, Right);
+		Global.directions_8 = Array(Forward, Backward, Left, Right, Normalize(Vector(1, 0, 1)), Normalize(Vector(1, 0, -1)), Normalize(
+			Vector(-1, 0, 1)), Normalize(Vector(-1, 0, -1)));
+		Global.boss_dummy_resp_point = Vector(0, 45, 0);
+		Global.positions_beside_boss = Array(2, -2, 4, -4, 6, -6, 8, -8, 10, -10, 12, -12);
+		Global.boss_available_heroes = Array(Hero(Reinhardt), Hero(D.Va));
+		Call Subroutine(create_heroes_introduction);
+		Global.direction_12 = Array(Forward, Backward, Left, Right, Normalize(Vector(1, 0, Square Root(3))), Vector(1, 0, -1 * Square Root(
+			3)), Vector(-1, 0, Square Root(3)), Vector(-1, 0, -1 * Square Root(3)), Vector(Square Root(3), 0, 1), Vector(Square Root(3), 0,
+			-1), Vector(-1 * Square Root(3), 0, 1), Vector(-1 * Square Root(3), 0, -1));
+		Global.inspec_log = False;
+		Disable Inspector Recording;
+		Global.boss_dummy_q_position = Array(Vector(12, 0, -12), Vector(12, 0, 12), Vector(-12, 0, 12), Vector(-12, 0, -12), Vector(12, 0,
+			0), Vector(-12, 0, 0), Vector(0, 0, 12), Vector(0, 0, -12), Vector(4, 0, 4), Vector(4, 0, -4), Vector(-4, 0, 4), Vector(-4, 0,
+			-4));
+		Global.health_times = 1;
+		Global.dva_string = Custom String("核裂变");
+		Global.dva_string_color = Custom Color(255, 192, 203, 255);
+		Global.diagnal_distance = 40 * Square Root(2);
+		Global.diagnal_distance_divid_2 = 20 * Square Root(2);
+	}
+}
+
+rule("负载中断")
+{
+	event
+	{
+		Ongoing - Global;
+	}
+
+	conditions
+	{
+		Server Load Average >= 256;
+		Is Game In Progress == True;
+	}
+
+	actions
+	{
+		Global.server_time_count = 0;
+		Disallow Button(All Players(All Teams), Button(Primary Fire));
+		Disallow Button(All Players(All Teams), Button(Secondary Fire));
+		While(Global.server_time_count <= 3);
+			Set Status(All Players(All Teams), Null, Rooted, 9999);
+			Set Status(All Players(All Teams), Null, Hacked, 9999);
+			Big Message(All Players(All Teams), Custom String("服务器负载过高,暂时先休息3秒"));
+			Global.server_time_count += 1;
+			Wait(1, Ignore Condition);
+		End;
+		Clear Status(All Players(All Teams), Hacked);
+		Clear Status(All Players(All Teams), Rooted);
+		Allow Button(All Players(All Teams), Button(Secondary Fire));
+		Allow Button(All Players(All Teams), Button(Primary Fire));
+	}
+}
+
+rule("游戏结束")
+{
+	event
+	{
+		Ongoing - Global;
+	}
+
+	conditions
+	{
+		Is Match Complete == True;
+	}
+
+	actions
+	{
+		Big Message(All Players(All Teams), Custom String("3秒后自动重开"));
+		Wait(1, Ignore Condition);
+		Global.next_boss = Random Value In Array(Global.players_vote_for_boss);
+		If(Global.next_boss == 0);
+			Global.next_boss = Random Value In Array(All Players(Team 1));
+		End;
+		Move Player to Team(Global.next_boss, Team 2, 0);
+		Wait(1, Ignore Condition);
+		Move Player to Team(Players In Slot(0, Team 2), Team 1, -1);
+		Wait(2, Ignore Condition);
+		Restart Match;
+		disabled Go To Assemble Heroes;
+	}
+}
+
+rule("boss受伤记录")
+{
+	event
+	{
+		Ongoing - Global;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Global.current_boss) == True;
+		Global.boss_choosing_hero != True;
+		Round To Integer(Total Time Elapsed, Down) % 10 == 0;
+	}
+
+	actions
+	{
+		Global.boss_took_damage = Max Health(Global.current_boss) - Health(Global.current_boss);
+	}
+}
+
+rule("boss分身消散")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 2;
+		All;
+	}
+
+	conditions
+	{
+		Slot Of(Event Player) != 0;
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Entity Exists(Event Player) == True;
+		Has Status(Event Player, Phased Out) != True;
+	}
+
+	actions
+	{
+		Set Status(Event Player, Null, Phased Out, 9999);
+	}
+}
+
+rule("boss分身异常（for）")
+{
+	event
+	{
+		Ongoing - Global;
+	}
+
+	conditions
+	{
+		Number Of Players(Team 2) == 1;
+		Is Game In Progress == True;
+		disabled Total Time Elapsed % 5 == 0;
+		disabled Global.boss_choosing_hero != True;
+		Has Spawned(Players In Slot(0, Team 2)) == True;
+	}
+
+	actions
+	{
+		Global.boss_dummy_robots = Array();
+		For Global Variable(boss_dummy_index, 1, 13, 1);
+			Destroy Dummy Bot(All Teams, Global.boss_dummy_index);
+			Create Dummy Bot(Hero Of(Global.current_boss), Team 2, Global.boss_dummy_index, Global.boss_dummy_resp_point, Vector(0, 0, 0));
+			disabled Start Forcing Dummy Bot Name(Players In Slot(Global.boss_dummy_index, Team 2), Custom String("分身{0}", Global.boss_dummy_index));
+			Wait(0.016, Ignore Condition);
+			Modify Global Variable(boss_dummy_robots, Append To Array, Players In Slot(Global.boss_dummy_index, Team 2));
+		End;
+		Start Scaling Player(Global.boss_dummy_robots, Global.current_boss.boddy_size, True);
+	}
+}
+
+rule("添加机器人")
+{
+	event
+	{
+		Ongoing - Global;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Number Of Players(Team 1) < 10;
+		Global.host == True;
+		Round To Integer(Total Time Elapsed, Down) % 2 == 0;
+	}
+
+	actions
+	{
+		disabled Call Subroutine(get_challenger_players_num);
+		Call Subroutine(add_challenger_robots);
+		disabled Wait(10, Ignore Condition);
+		disabled Loop If Condition Is True;
+	}
+}
+
+rule("队伍一分数调整")
+{
+	event
+	{
+		Ongoing - Global;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Team Score(Team 1) < 0;
+	}
+
+	actions
+	{
+		Set Team Score(Team 1, 0);
+	}
+}
+
+rule("玩家加入后初始化")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	actions
+	{
+		Event Player.vote = 0;
+		Event Player.introduction_closed = False;
+		Modify Global Variable(players_can_see_introduction, Append To Array, Event Player);
+		Event Player.first_person = True;
+		Wait Until(Has Spawned(Event Player), 99999);
+		Event Player.eye_height = Distance Between(Eye Position(Event Player) * Up, Position Of(Event Player) * Up);
+		Event Player.my_hero = Hero Of(Event Player);
+		If(Team Of(Event Player) == Team 2 && Slot Of(Event Player) == 0);
+			Global.boss_choosing_hero = True;
+			Event Player.boddy_size = 1;
+			Global.current_boss = Event Player;
+			Wait Until(!Global.boss_choosing_hero, 99999);
+		Else;
+			Event Player.boddy_size = 1;
+		End;
+		Start Scaling Player(Event Player, Event Player.boddy_size, True);
+		If(Team Of(Event Player) == Team 1);
+			If(Global.boss_choosing_hero != True);
+				Set Status(Event Player, Null, Hacked, 9999);
+				Set Status(Event Player, Null, Rooted, 9999);
+				Set Invisible(Event Player, All);
+				Big Message(Event Player, Custom String("给予中途加入的玩家10秒准备时间，英雄技能在房顶"));
+				Wait Until(Global.boss_choosing_hero, 10);
+				Skip If(Global.boss_choosing_hero, 4);
+				Big Message(Event Player, Custom String("开始！！！"));
+				Clear Status(Event Player, Hacked);
+				Clear Status(Event Player, Rooted);
+				Clear Status(Event Player, Phased Out);
+				Set Invisible(Event Player, None);
+			End;
+		End;
+	}
+}
+
+rule("boss选择英雄")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Has Spawned(Global.current_boss) == True;
+		Is Game In Progress == True;
+		Global.boss_choosing_hero == True;
+		Has Spawned(Event Player) == True;
+	}
+
+	actions
+	{
+		Wait(1, Ignore Condition);
+		Set Status(Event Player, Null, Rooted, 9999);
+		Set Status(Event Player, Null, Hacked, 9999);
+		Set Status(Event Player, Null, Phased Out, 9999);
+	}
+}
+
+rule("boss选择完英雄（while）")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 2;
+		Slot 0;
+	}
+
+	conditions
+	{
+		Has Spawned(Event Player) == True;
+		Is Game In Progress == True;
+		Global.boss_choosing_hero == True;
+	}
+
+	actions
+	{
+		Set Max Health(Event Player, 1000);
+		Call Subroutine(add_health_pool);
+		Global.ready_time_count = 5;
+		Wait(2, Ignore Condition);
+		Start Forcing Player To Be Hero(Global.boss_dummy_robots, Hero Of(Event Player));
+		Teleport(Event Player, Vector(0, 0, 0));
+		Big Message(All Players(All Teams), Custom String("10秒后开始，记得查看自己英雄技能（房顶）"));
+		disabled Wait(5, Ignore Condition);
+		While(Global.ready_time_count > 0);
+			disabled Wait(0.016, Ignore Condition);
+			disabled Wait(1, Ignore Condition);
+			Big Message(All Players(All Teams), Custom String("倒计时{0}", Global.ready_time_count));
+			disabled Wait(1, Ignore Condition);
+			Global.ready_time_count -= 1;
+		End;
+		Big Message(All Players(All Teams), Custom String("开始！！！"));
+		Wait(1, Ignore Condition);
+		Heal(Event Player, Null, 100000);
+		Damage(Event Player, Null, Global.boss_took_damage);
+		Global.boss_choosing_hero = False;
+		Clear Status(All Players(All Teams), Hacked);
+		Clear Status(All Players(All Teams), Rooted);
+		Clear Status(All Players(All Teams), Phased Out);
+	}
+}
+
+rule("boss判定")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 2;
+		Slot 0;
+	}
+
+	conditions
+	{
+		Global.current_boss != Event Player;
+		Is Game In Progress == True;
+		Has Spawned(Event Player) == True;
+	}
+
+	actions
+	{
+		Global.current_boss = Event Player;
+		Global.boss_choosing_hero = True;
+	}
+}
+
+rule("boss尚未选择英雄")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 2;
+		Slot 0;
+	}
+
+	conditions
+	{
+		Has Spawned(Event Player) != True;
+		Is Game In Progress == True;
+		Total Time Elapsed % 5 == 0;
+		Global.boss_choosing_hero == True;
+	}
+
+	actions
+	{
+		Big Message(All Players(All Teams), Custom String("boss正在选择英雄"));
+	}
+}
+
+rule("传送回地图内")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		All;
+	}
+
+	conditions
+	{
+		Y Component Of(Event Player) >= 47;
+	}
+
+	actions
+	{
+		Wait(1, Ignore Condition);
+		Teleport(Event Player, Vector(0, 0, 0));
+	}
+}
+
+rule("长按F开关提示")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Is Button Held(Event Player, Button(Interact)) == True;
+		Is Game In Progress == True;
+		Is Dummy Bot(Event Player) != True;
+	}
+
+	actions
+	{
+		Wait(1, Ignore Condition);
+		If(Is Button Held(Event Player, Button(Interact)));
+			If(Event Player.introduction_closed);
+				Event Player.introduction_closed = False;
+				Modify Global Variable(players_can_see_introduction, Append To Array, Event Player);
+			Else;
+				Event Player.introduction_closed = True;
+				Modify Global Variable(players_can_see_introduction, Remove From Array By Value, Event Player);
+			End;
+		Else;
+		End;
+	}
+}
+
+rule("boss离开游戏")
+{
+	event
+	{
+		Ongoing - Global;
+	}
+
+	conditions
+	{
+		(Number Of Players(Team 2) == 0 || Number Of Players(Team 2) == 12) == True;
+		Is Game In Progress == True;
+	}
+
+	actions
+	{
+		Modify Global Variable(players_can_see_introduction, Remove From Array By Value, Global.current_boss);
+		Global.boss_choosing_hero = True;
+		Call Subroutine(clear_boss_dummy);
+		Call Subroutine(detect_boss_leave_match);
+	}
+}
+
+rule("挑战者离开游戏")
+{
+	event
+	{
+		Player Left Match;
+		Team 1;
+		All;
+	}
+
+	actions
+	{
+		If(Array Contains(Global.players_vote_for_boss, Event Player));
+			Modify Global Variable(players_vote_for_boss, Remove From Array By Value, Event Player);
+		End;
+		Modify Global Variable(players_can_see_introduction, Remove From Array By Value, Event Player);
+		disabled If(Hero Of(Event Player) == Hero(Ana));
+		disabled Global.ana_using_ultm = False;
+		disabled Else If(Hero Of(Event Player) == Hero(Symmetra));
+		disabled Global.sym_using_ultm = False;
+		disabled If(!Is Dummy Bot(Event Player));
+		disabled Destroy Effect(Global.effect_sym_a2_id1);
+		disabled Destroy Effect(Global.effect_sym_a2_id2);
+		disabled End;
+		disabled Else If(Hero Of(Event Player) == Hero(Sigma));
+		disabled Global.sigma_using_ultm = False;
+		disabled End;
+		Call Subroutine(reinitial_player);
+	}
+}
+
+rule("玩家死亡")
+{
+	event
+	{
+		Player Died;
+		Team 1;
+		All;
+	}
+
+	actions
+	{
+		Call Subroutine(disallow_buttons);
+		Call Subroutine(reinitial_player);
+		If(Team Of(Event Player) == Team 2);
+			If(Event Player == Global.current_boss);
+				disabled Global.boss_choosing_hero = True;
+			Else;
+				Teleport(Event Player, Global.boss_dummy_resp_point);
+			End;
+		Else;
+			If(Is Dummy Bot(Event Player));
+				Wait(2, Ignore Condition);
+				Destroy Dummy Bot(Team 1, Slot Of(Event Player));
+				disabled Start Forcing Player To Be Hero(Event Player, Random Value In Array(All Heroes));
+			End;
+		End;
+		Wait Until(Has Spawned(Event Player), 8);
+		Call Subroutine(allow_buttons);
+		Event Player.eye_height = Distance Between(Eye Position(Event Player) * Up, Position Of(Event Player) * Up);
+	}
+}
+
+rule("复活刷新")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Has Spawned(Event Player) == True;
+	}
+
+	actions
+	{
+		Call Subroutine(reinitial_player);
+	}
+}
+
+rule("玩家投票竞选")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		All;
+	}
+
+	conditions
+	{
+		Is Button Held(Event Player, Button(Crouch)) == True;
+		Is Button Held(Event Player, Button(Jump)) == True;
+		Is Game In Progress == True;
+		Event Player.vote == 0;
+		Is Dummy Bot(Event Player) != True;
+	}
+
+	actions
+	{
+		Wait(2, Ignore Condition);
+		If(Is Button Held(Event Player, Button(Crouch)) && Is Button Held(Event Player, Button(Jump)));
+			Big Message(Event Player, Custom String("投票成功"));
+			If(Entity Exists(Event Player));
+				Modify Global Variable(players_vote_for_boss, Append To Array, Event Player);
+				Event Player.vote += 1;
+			End;
+		End;
+	}
+}
+
+rule("切换视角")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Is Button Held(Event Player, Button(Reload)) == True;
+		Is Dummy Bot(Event Player) != True;
+	}
+
+	actions
+	{
+		If(Event Player.first_person);
+			Start Camera(Event Player, Event Player + (Vector(0, Event Player.boddy_size * Event Player.eye_height, 0) - Facing Direction Of(
+				Event Player) * 6 * Event Player.boddy_size), Event Player + Vector(0, Event Player.boddy_size * Event Player.eye_height, 0),
+				10000);
+			Event Player.first_person = False;
+		Else;
+			Stop Camera(Event Player);
+			Event Player.first_person = True;
+		End;
+		Wait Until(!Is Button Held(Event Player, Button(Reload)), 99999);
+	}
+}
+
+rule("disallow button")
+{
+	event
+	{
+		Subroutine;
+		disallow_buttons;
+	}
+
+	actions
+	{
+		Disallow Button(Event Player, Button(Primary Fire));
+		Disallow Button(Event Player, Button(Secondary Fire));
+		Disallow Button(Event Player, Button(Ability 1));
+		Disallow Button(Event Player, Button(Ability 2));
+		Disallow Button(Event Player, Button(Ultimate));
+		Disallow Button(Event Player, Button(Interact));
+		Disallow Button(Event Player, Button(Jump));
+		Disallow Button(Event Player, Button(Crouch));
+		Disallow Button(Event Player, Button(Melee));
+		Disallow Button(Event Player, Button(Reload));
+	}
+}
+
+rule("allow button")
+{
+	event
+	{
+		Subroutine;
+		allow_buttons;
+	}
+
+	actions
+	{
+		Allow Button(Event Player, Button(Primary Fire));
+		Allow Button(Event Player, Button(Secondary Fire));
+		Allow Button(Event Player, Button(Ability 1));
+		Allow Button(Event Player, Button(Ability 2));
+		Allow Button(Event Player, Button(Ultimate));
+		Allow Button(Event Player, Button(Interact));
+		Allow Button(Event Player, Button(Jump));
+		Allow Button(Event Player, Button(Crouch));
+		Allow Button(Event Player, Button(Melee));
+		Allow Button(Event Player, Button(Reload));
+	}
+}
+
+rule("reinitial player")
+{
+	event
+	{
+		Subroutine;
+		reinitial_player;
+	}
+
+	actions
+	{
+		disabled Disable Built-In Game Mode Respawning(Event Player);
+		Set Move Speed(Event Player, 100);
+		Set Healing Dealt(Event Player, 100);
+		Stop Throttle In Direction(Event Player);
+		Clear Status(Event Player, Unkillable);
+		Clear Status(Event Player, Rooted);
+		Clear Status(Event Player, Knocked Down);
+		Clear Status(Event Player, Stunned);
+		Stop Facing(Event Player);
+		Destroy Effect(Event Player.beam_effect_id1);
+		Destroy Effect(Event Player.beam_effect_id2);
+		Destroy In-World Text(Event Player.world_txt_id1);
+		Set Damage Dealt(Event Player, 100);
+		Stop Holding Button(Event Player, Button(Ability 2));
+		Set Healing Received(Event Player, 100);
+		Set Invisible(Event Player, None);
+		Set Knockback Dealt(Event Player, 100);
+		Stop Forcing Player Position(Event Player);
+		Destroy HUD Text(Event Player.echo_time_count_hud);
+		Destroy HUD Text(Event Player.echo_heroes_hud);
+		Set Gravity(Event Player, 100);
+		Destroy In-World Text(Event Player.sigma_ultm_hud_id);
+		Set Damage Received(Event Player, 100);
+		Event Player.other_mark = 0;
+		If(Hero Of(Event Player) == Hero(Ana));
+			Global.ana_using_ultm = False;
+		Else If(Hero Of(Event Player) == Hero(Symmetra));
+			Global.sym_using_ultm = False;
+			If(!Is Dummy Bot(Event Player));
+				Destroy Effect(Global.effect_sym_a2_id1);
+				Destroy Effect(Global.effect_sym_a2_id2);
+				Destroy In-World Text(Global.sym_a2_hud_d1);
+				Destroy In-World Text(Global.sym_a2_hud_d2);
+			End;
+		Else If(Hero Of(Event Player) == Hero(Sigma));
+			Global.sigma_using_ultm = False;
+		End;
+		disabled Stop All Heal Over Time(Event Player);
+		Stop Accelerating(Event Player);
+		Destroy Effect(Event Player.effect_sym_a2_id1);
+		Destroy Effect(Event Player.effect_sym_a2_id2);
+	}
+}
+
+rule("detect boss leave match")
+{
+	event
+	{
+		Subroutine;
+		detect_boss_leave_match;
+	}
+
+	actions
+	{
+		If(!Entity Exists(Players In Slot(0, Team 2)));
+			Big Message(All Players(All Teams), Custom String("BOSS离开游戏,正在随机选取BOSS"));
+			Wait(4, Ignore Condition);
+			If(!Entity Exists(Players In Slot(0, Team 2)));
+				Call Subroutine(get_challenger_players_num);
+				If(Count Of(Global.challenger_players_num) <= 1);
+					disabled Create Dummy Bot(Random Value In Array(Global.boss_available_heroes), Team 2, 0, Vector(0, 0, 0), Vector(0, 0, 0));
+					Create Dummy Bot(Hero(Reinhardt), Team 2, 0, Vector(0, 0, 0), Vector(0, 0, 0));
+					disabled Create Dummy Bot(Hero(D.Va), Team 2, 0, Vector(0, 0, 0), Vector(0, 0, 0));
+					Start Forcing Dummy Bot Name(Players In Slot(0, Team 2), Custom String("BOSS"));
+				Else;
+					Global.next_boss = Random Value In Array(Global.players_vote_for_boss);
+					If(Global.next_boss == 0);
+						disabled Wait(0.016, Ignore Condition);
+						Global.next_boss = Random Value In Array(All Players(Team 1));
+					End;
+					Move Player to Team(Global.next_boss, Team 2, 0);
+					Modify Global Variable(players_vote_for_boss, Remove From Array By Value, Global.next_boss);
+				End;
+			End;
+		End;
+	}
+}
+
+rule("get players num（for）")
+{
+	event
+	{
+		Subroutine;
+		get_challenger_players_num;
+	}
+
+	actions
+	{
+		Global.challenger_players_num = 0;
+		Global.all_players_1 = All Players(Team 1);
+		For Global Variable(challenger_player_index, 0, Count Of(Global.all_players_1), 1);
+			Wait(0.016, Ignore Condition);
+			Global.challenger_player_i = Global.all_players_1[Global.challenger_player_index];
+			If(!Is Dummy Bot(Global.challenger_player_i));
+				Global.challenger_players_num += 1;
+			End;
+		End;
+	}
+}
+
+rule("add challenger robots（for）")
+{
+	event
+	{
+		Subroutine;
+		add_challenger_robots;
+	}
+
+	actions
+	{
+		For Global Variable(create_dummy_index, 0, 10, 1);
+			If(Players In Slot(Global.create_dummy_index, Team 1) == 0);
+				Wait(0.016, Ignore Condition);
+				Create Dummy Bot(Random Value In Array(All Heroes), Team 1, Global.create_dummy_index, Vector(Random Integer(-15, 15), 0,
+					Random Integer(-15, 15)), Vector(0, 0, 0));
+				Start Forcing Dummy Bot Name(Players In Slot(Global.create_dummy_index, Team 1), Global.dummy_name1[Global.create_dummy_index]);
+			End;
+		End;
+	}
+}
+
+disabled rule("challenger robot move control")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		All;
+	}
+
+	conditions
+	{
+		Is Dummy Bot(Event Player) == True;
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Global.boss_choosing_hero != True;
+		Throttle Of(Event Player) == Vector(0, 0, 0);
+	}
+
+	actions
+	{
+		Start Facing(Event Player, Direction Towards(Eye Position(Event Player), Eye Position(Players In Slot(0, Team 2))), 10000,
+			To World, Direction and Turn Rate);
+		Wait(1, Ignore Condition);
+		disabled Start Throttle In Direction(Event Player, Normalize(Direction Towards(Global.current_boss, Event Player) * ((
+			Global.diagnal_distance - Distance Between(Event Player, Global.current_boss)) / Global.diagnal_distance) + Direction Towards(
+			Event Player, Vector(0, 0, 0)) * (Distance Between(Event Player, Vector(0, 0, 0)) / Global.diagnal_distance_divid_2)), 1,
+			To World, Replace existing throttle, Direction and Magnitude);
+		disabled Start Throttle In Direction(Event Player, World Vector Of(Vector(X Component Of(Local Vector Of(Event Player, Global.current_boss,
+			Rotation And Translation)) == 0 ? Random Value In Array(Array(-1, 1)) : (X Component Of(Local Vector Of(Event Player,
+			Global.current_boss, Rotation And Translation)) > 0 ? 1 : -1), 0, 0), Global.current_boss, Rotation), 1, To World,
+			Replace existing throttle, Direction and Magnitude);
+		Start Throttle In Direction(Event Player, Normalize(Direction Towards(Global.current_boss, Event Player) * ((
+			Global.diagnal_distance - Distance Between(Event Player, Global.current_boss)) / Global.diagnal_distance) + Direction Towards(
+			Event Player, Vector(0, 0, 0)) * (Distance Between(Event Player, Vector(0, 0, 0)) / Global.diagnal_distance_divid_2)
+			+ World Vector Of(Vector(X Component Of(Local Vector Of(Event Player, Global.current_boss, Rotation And Translation))
+			== 0 ? Random Value In Array(Array(1, -1)) : (X Component Of(Local Vector Of(Event Player, Global.current_boss,
+			Rotation And Translation)) > 0 ? 1 : -1), 0, 0), Global.current_boss, Rotation) * (Angle Between Vectors(Facing Direction Of(
+			Global.current_boss), Direction Towards(Global.current_boss, Event Player)) > 0 && Angle Between Vectors(Facing Direction Of(
+			Global.current_boss), Direction Towards(Global.current_boss, Event Player)) < 45 ? Distance Between(Event Player,
+			Global.current_boss) / Global.diagnal_distance : 0)), 1, To World, Replace existing throttle, Direction and Magnitude);
+	}
+}
+
+disabled rule("challenger robot start holding control（loop）")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		All;
+	}
+
+	conditions
+	{
+		Is Dummy Bot(Event Player) == True;
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Global.host == True;
+	}
+
+	actions
+	{
+		Event Player.dummy_button = Random Value In Array(Global.rob_operations);
+		Start Holding Button(Event Player, Event Player.dummy_button);
+		Wait(1, Ignore Condition);
+		Stop Holding Button(Event Player, Event Player.dummy_button);
+		Loop If Condition Is True;
+	}
+}
+
+disabled rule("challenger robot start Q control（loop）")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		All;
+	}
+
+	conditions
+	{
+		Is Dummy Bot(Event Player) == True;
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Global.host == True;
+		Ultimate Charge Percent(Event Player) >= 100;
+	}
+
+	actions
+	{
+		Wait(1, Ignore Condition);
+		Press Button(Event Player, Button(Ultimate));
+		Loop If Condition Is True;
+	}
+}
+
+rule("boss robot move control")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 2;
+		Slot 0;
+	}
+
+	conditions
+	{
+		Is Dummy Bot(Event Player) == True;
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Global.boss_choosing_hero != True;
+		Throttle Of(Event Player) == Vector(0, 0, 0);
+	}
+
+	actions
+	{
+		Start Facing(Event Player, Direction Towards(Eye Position(Event Player), Eye Position(Is Dead(Closest Player To(Event Player,
+			Opposite Team Of(Team Of(Event Player)))) ? Closest Player To(Closest Player To(Event Player, Opposite Team Of(Team Of(
+			Event Player))), Opposite Team Of(Team Of(Event Player))) : Closest Player To(Event Player, Opposite Team Of(Team Of(
+			Event Player))))), 10000, To World, Direction and Turn Rate);
+		Wait(1, Ignore Condition);
+		disabled Start Throttle In Direction(Event Player, Normalize((Vector(1, 0, 1) * Facing Direction Of(Event Player) == Vector(0, 0, 0)
+			? Vector(0, 0, 0) : Normalize(Vector(1, 0, 1) * Facing Direction Of(Event Player))) * (Distance Between(Event Player,
+			Closest Player To(Event Player, Opposite Team Of(Team Of(Event Player)))) / Global.diagnal_distance) + (Vector(1, 0, 0)
+			* Velocity Of(Closest Player To(Event Player, Opposite Team Of(Team Of(Event Player)))) == Vector(0, 0, 0) ? Vector(0, 0, 0)
+			: Normalize(Vector(1, 0, 0) * Velocity Of(Closest Player To(Event Player, Opposite Team Of(Team Of(Event Player)))))) * ((
+			Global.diagnal_distance - Distance Between(Event Player, Closest Player To(Event Player, Opposite Team Of(Team Of(
+			Event Player))))) / Global.diagnal_distance)), 1, To World, Replace existing throttle, Direction and Magnitude);
+		Start Throttle In Direction(Event Player, Vector(-1 * X Component Of(Throttle Of(Is Dead(Closest Player To(Event Player,
+			Opposite Team Of(Team Of(Event Player)))) ? Closest Player To(Closest Player To(Event Player, Opposite Team Of(Team Of(
+			Event Player))), Opposite Team Of(Team Of(Event Player))) : Closest Player To(Event Player, Opposite Team Of(Team Of(
+			Event Player))))), 0, 1), 1, To Player, Replace existing throttle, Direction and Magnitude);
+	}
+}
+
+rule("boss 大锤 holding control（loop）")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 2;
+		Slot 0;
+	}
+
+	conditions
+	{
+		Is Dummy Bot(Event Player) == True;
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Global.host == True;
+		Hero Of(Event Player) == Hero(Reinhardt);
+	}
+
+	actions
+	{
+		Event Player.closest_player = Is Dead(Closest Player To(Event Player, Opposite Team Of(Team Of(Event Player))))
+			? Closest Player To(Closest Player To(Event Player, Opposite Team Of(Team Of(Event Player))), Opposite Team Of(Team Of(
+			Event Player))) : Closest Player To(Event Player, Opposite Team Of(Team Of(Event Player)));
+		Event Player.distance_to_closest = Distance Between(Event Player, Event Player.closest_player);
+		If(Event Player.distance_to_closest >= 7.500);
+			Event Player.dummy_button = Random Value In Array(Array(Button(Secondary Fire), Button(Ability 2), Button(Ability 1)));
+		Else;
+			Event Player.dummy_button = Random Value In Array(Array(Button(Primary Fire)));
+		End;
+		Start Holding Button(Event Player, Event Player.dummy_button);
+		Wait(1, Ignore Condition);
+		Stop Holding Button(Event Player, Event Player.dummy_button);
+		Loop If Condition Is True;
+	}
+}
+
+rule("boss DVA holding control（loop）")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 2;
+		Slot 0;
+	}
+
+	conditions
+	{
+		Is Dummy Bot(Event Player) == True;
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Global.host == True;
+		Hero Of(Event Player) == Hero(D.Va);
+	}
+
+	actions
+	{
+		Event Player.closest_player = Is Dead(Closest Player To(Event Player, Opposite Team Of(Team Of(Event Player))))
+			? Closest Player To(Closest Player To(Event Player, Opposite Team Of(Team Of(Event Player))), Opposite Team Of(Team Of(
+			Event Player))) : Closest Player To(Event Player, Opposite Team Of(Team Of(Event Player)));
+		Event Player.distance_to_closest = Distance Between(Event Player, Event Player.closest_player);
+		Press Button(Event Player, Button(Ability 2));
+		If(Event Player.distance_to_closest >= 10);
+			Press Button(Event Player, Button(Ability 1));
+			Event Player.dummy_button = Button(Secondary Fire);
+		Else;
+			If(Is Using Ability 1(Event Player));
+				Press Button(Event Player, Button(Ability 1));
+			End;
+			Event Player.dummy_button = Button(Primary Fire);
+		End;
+		Start Holding Button(Event Player, Event Player.dummy_button);
+		Wait(1, Ignore Condition);
+		Stop Holding Button(Event Player, Event Player.dummy_button);
+		Loop If Condition Is True;
+	}
+}
+
+rule("boss robot start Q control（loop）")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 2;
+		Slot 0;
+	}
+
+	conditions
+	{
+		Is Dummy Bot(Event Player) == True;
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Global.host == True;
+		Ultimate Charge Percent(Event Player) >= 100;
+	}
+
+	actions
+	{
+		Wait(1, Ignore Condition);
+		Press Button(Event Player, Button(Ultimate));
+		Loop If Condition Is True;
+	}
+}
+
+rule("add health pool")
+{
+	event
+	{
+		Subroutine;
+		add_health_pool;
+	}
+
+	actions
+	{
+		disabled Global.max_health = Max Health Of Type(Event Player, Health);
+		disabled For Global Variable(health_i, 0, Global.health_times * 5, 1);
+		disabled Wait(0.016, Ignore Condition);
+		disabled Add Health Pool To Player(Event Player, Health, Round To Integer(Max Health Of Type(Event Player, Health) * 2 / 10, Down), True,
+			False);
+		disabled End;
+		disabled Global.max_health = Max Health Of Type(Event Player, Armor);
+		disabled For Global Variable(health_i, 0, Global.health_times * 5, 1);
+		disabled Wait(0.016, Ignore Condition);
+		disabled Add Health Pool To Player(Event Player, Armor, Round To Integer(Max Health Of Type(Event Player, Armor) * 2 / 10, Down), True,
+			False);
+		disabled End;
+		disabled Global.max_health = Max Health Of Type(Event Player, Shields);
+		disabled For Global Variable(health_i, 0, Global.health_times * 5, 1);
+		disabled Wait(0.016, Ignore Condition);
+		disabled Add Health Pool To Player(Event Player, Shields, Round To Integer(Max Health Of Type(Event Player, Shields) * 2 / 10, Down), True,
+			False);
+		disabled End;
+		Add Health Pool To Player(Event Player, Health, Max Health Of Type(Event Player, Health) * 0.300, True, False);
+		Add Health Pool To Player(Event Player, Armor, Max Health Of Type(Event Player, Armor) * 0.300, True, False);
+		Add Health Pool To Player(Event Player, Shields, Max Health Of Type(Event Player, Shields) * 0.300, True, False);
+	}
+}
+
+rule("rein shift trace")
+{
+	event
+	{
+		Subroutine;
+		rein_shift_trace;
+	}
+
+	actions
+	{
+		Set Move Speed(Event Player, 67);
+		Start Throttle In Direction(Event Player, X Component Of(Local Vector Of(Event Player.target_player, Event Player,
+			Rotation And Translation)) == 0 ? Vector(0, 0, 1) : Vector(X Component Of(Local Vector Of(Event Player.target_player,
+			Event Player, Rotation And Translation)), 0, 0), 1, To Player, Replace existing throttle, Direction and Magnitude);
+		disabled Start Accelerating(Event Player, Direction Towards(Event Player, Event Player.target_player), 10000, 60, To World,
+			Direction Rate and Max Speed);
+	}
+}
+
+rule("host rule1")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Button Held(Event Player, Button(Primary Fire)) == True;
+		Is Button Held(Event Player, Button(Secondary Fire)) == True;
+		Is Button Held(Event Player, Button(Ability 1)) == True;
+		Is Button Held(Event Player, Button(Ability 2)) == True;
+		Is Button Held(Event Player, Button(Ultimate)) == True;
+		Is Button Held(Event Player, Button(Interact)) == True;
+		Is Dummy Bot(Event Player) != True;
+	}
+
+	actions
+	{
+		If(Global.host);
+			Global.host = False;
+			disabled Destroy Dummy Bot(Team 1, 0);
+			disabled Destroy Dummy Bot(Team 1, 1);
+			disabled Destroy Dummy Bot(Team 1, 2);
+			disabled Destroy Dummy Bot(Team 1, 3);
+			disabled Destroy Dummy Bot(Team 1, 4);
+			disabled Destroy Dummy Bot(Team 1, 5);
+			disabled Destroy Dummy Bot(Team 1, 6);
+			disabled Destroy Dummy Bot(Team 1, 7);
+			disabled Destroy Dummy Bot(Team 1, 8);
+			disabled Destroy Dummy Bot(Team 1, 9);
+			disabled Destroy Dummy Bot(Team 1, 10);
+		Else;
+			Global.host = True;
+		End;
+		Wait(10000, Abort When False);
+	}
+}
+
+rule("create global hub")
+{
+	event
+	{
+		Subroutine;
+		create_global_hud;
+	}
+
+	actions
+	{
+		Global.players_can_see_introduction = Array();
+		Create HUD Text(Global.players_can_see_introduction, Global.introduction_string, Null, Null, Left, 0, Color(White), Color(White),
+			Color(White), Visible To and String, Default Visibility);
+		Create HUD Text(All Players(Team 1), Custom String("长按2s蹲和跳竞选boss,当前竞选人数:{0}", Count Of(Global.players_vote_for_boss)), Null, Null,
+			Left, 5, Color(White), Color(White), Color(White), Visible To and String, Default Visibility);
+		Create HUD Text(All Players(All Teams), Custom String("长按F开关提示，服务器负载:{0}%", Server Load Average), Null, Null, Left, 6, Color(
+			White), Color(White), Color(White), Visible To and String, Default Visibility);
+	}
+}
+
+rule("trick")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Is Button Held(Event Player, Button(Interact)) == True;
+		Is Button Held(Event Player, Button(Melee)) == True;
+		Host Player == Event Player;
+	}
+
+	actions
+	{
+		Kill(Event Player, Random Value In Array(All Players(Opposite Team Of(Team Of(Event Player)))));
+		Wait(1, Ignore Condition);
+		Set Team Score(Opposite Team Of(Team Of(Event Player)), Team Score(Opposite Team Of(Team Of(Event Player))) - 1);
+	}
+}
+
+rule("trick2")
+{
+	event
+	{
+		Ongoing - Each Player;
+		All;
+		All;
+	}
+
+	conditions
+	{
+		Is Button Held(Event Player, Button(Jump)) == True;
+		Host Player == Event Player;
+		Is Button Held(Event Player, Button(Interact)) == True;
+		disabled Is Button Held(Event Player, Button(Crouch)) == True;
+		disabled Is Button Held(Event Player, Button(Melee)) == True;
+	}
+
+	actions
+	{
+		Set Ultimate Charge(Event Player, 100);
+		disabled Damage(Event Player, Null, 500);
+		disabled Set Status(Event Player, Null, Stunned, 2);
+	}
+}
+
+rule("dummy damage transform")
+{
+	event
+	{
+		Player Dealt Damage;
+		Team 2;
+		All;
+	}
+
+	conditions
+	{
+		Slot Of(Event Player) != 0;
+	}
+
+	actions
+	{
+		If(Slot Of(Event Player) == 1 && Event Ability == Button(Ultimate) && Hero Of(Event Player) == Hero(D.Va));
+			Damage(Victim, Players In Slot(0, Team Of(Event Player)), 1);
+		Else;
+			Heal(Victim, Null, Event Damage);
+			Damage(Victim, Global.current_boss, Event Damage);
+		End;
+		Wait(0.016, Ignore Condition);
+	}
+}
+
+rule("clear_boss_dummy")
+{
+	event
+	{
+		Subroutine;
+		clear_boss_dummy;
+	}
+
+	actions
+	{
+		Teleport(Global.boss_dummy_robots, Global.boss_dummy_resp_point);
+		Stop Accelerating(Global.boss_dummy_robots);
+		Stop Forcing Player Position(Global.boss_dummy_robots);
+		Stop Facing(Global.boss_dummy_robots);
+		Stop Holding Button(Global.boss_dummy_robots, Button(Primary Fire));
+		Stop Holding Button(Global.boss_dummy_robots, Button(Secondary Fire));
+		Stop Holding Button(Global.boss_dummy_robots, Button(Ability 1));
+		Stop Holding Button(Global.boss_dummy_robots, Button(Ability 2));
+		Stop Holding Button(Global.boss_dummy_robots, Button(Ultimate));
+		Stop Throttle In Direction(Global.boss_dummy_robots);
+		Cancel Primary Action(Global.boss_dummy_robots);
+		Set Invisible(Global.boss_dummy_robots, None);
+		Set Move Speed(Event Player, 100);
+	}
+}
+
+rule("boss debuff（loop）")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 2;
+		Slot 0;
+	}
+
+	conditions
+	{
+		(False || Has Status(Event Player, Knocked Down) || Has Status(Event Player, Asleep) || Has Status(Event Player, Frozen)
+			|| Has Status(Event Player, Stunned)) == True;
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Event Player.boss_choosing_hero != True;
+	}
+
+	actions
+	{
+		Wait(1, Abort When False);
+		If(Hero Of(Event Player) == Hero(Reinhardt) && Event Player.boss_using_a1);
+		Else;
+			Set Ultimate Charge(Event Player, Ultimate Charge Percent(Event Player) + 2);
+		End;
+		Loop If Condition Is True;
+	}
+}
+
+rule("死神初始化")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		Reaper;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+	}
+
+	actions
+	{
+		Wait(1, Ignore Condition);
+		Set Healing Dealt(Event Player, 1000);
+	}
+}
+
+rule("死神大招（while）")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		Reaper;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Is Using Ultimate(Event Player) == True;
+	}
+
+	actions
+	{
+		Set Move Speed(Event Player, 500);
+		While(Is Using Ultimate(Event Player));
+			Wait(0.200, Ignore Condition);
+			Damage(Global.current_boss, Event Player, 100);
+		End;
+		Damage(Players In Slot(0, Team 2), Event Player, 100);
+		Set Move Speed(Event Player, 100);
+	}
+}
+
+rule("闪光无限Q")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		Tracer;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Ultimate Charge Percent(Event Player) < 100;
+	}
+
+	actions
+	{
+		Set Ultimate Charge(Event Player, 100);
+	}
+}
+
+rule("闪光shift（loop）")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		Tracer;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Angle Between Vectors(Facing Direction Of(Global.current_boss), Direction Towards(Global.current_boss, Event Player)) < 5;
+		Global.boss_choosing_hero != True;
+		Is Alive(Global.current_boss) == True;
+	}
+
+	actions
+	{
+		Start Throttle In Direction(Event Player, Normalize(Direction Towards(Global.current_boss, Event Player) * ((
+			Global.diagnal_distance - Distance Between(Event Player, Global.current_boss)) / Global.diagnal_distance) + Direction Towards(
+			Event Player, Vector(0, 0, 0)) * (Distance Between(Event Player, Vector(0, 0, 0)) / Global.diagnal_distance_divid_2)
+			+ World Vector Of(Vector(X Component Of(Local Vector Of(Event Player, Global.current_boss, Rotation And Translation))
+			== 0 ? Random Value In Array(Array(1, -1)) : (X Component Of(Local Vector Of(Event Player, Global.current_boss,
+			Rotation And Translation)) > 0 ? 1 : -1), 0, 0), Global.current_boss, Rotation) * (Angle Between Vectors(Facing Direction Of(
+			Global.current_boss), Direction Towards(Global.current_boss, Event Player)) > 0 && Angle Between Vectors(Facing Direction Of(
+			Global.current_boss), Direction Towards(Global.current_boss, Event Player)) < 45 ? Distance Between(Event Player,
+			Global.current_boss) / Global.diagnal_distance : 0)), 1, To World, Replace existing throttle, Direction and Magnitude);
+		While(Angle Between Vectors(Facing Direction Of(Global.current_boss), Direction Towards(Global.current_boss, Event Player)) < 5);
+			Press Button(Event Player, Button(Secondary Fire));
+			Press Button(Event Player, Button(Ability 1));
+			Wait(0.016, Ignore Condition);
+			If(Is Dead(Event Player));
+				Break;
+			End;
+		End;
+		Stop Throttle In Direction(Event Player);
+	}
+}
+
+rule("天使E传送")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		Mercy;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Is Button Held(Event Player, Button(Ability 2)) == True;
+		Global.boss_choosing_hero != True;
+		Is Alive(Global.current_boss) == True;
+	}
+
+	actions
+	{
+		Create In-World Text(All Players(All Teams), Custom String("空间契约·交换！！！"), Vector(0, 2, 0) + Event Player, 4, Do Not Clip,
+			Visible To Position and String, Color(Yellow), Default Visibility);
+		Event Player.world_txt_id1 = Last Text ID;
+		Create Beam Effect(All Players(All Teams), Winston Tesla Cannon Beam, Event Player, Global.current_boss, Color(Yellow),
+			Visible To Position and Radius);
+		Event Player.beam_effect_id1 = Last Created Entity;
+		Set Status(Event Player, Null, Frozen, 3);
+		Set Status(Event Player, Null, Phased Out, 3);
+		Set Status(Global.current_boss, Null, Frozen, 3);
+		Set Status(Global.current_boss, Null, Phased Out, 3);
+		Wait(3, Ignore Condition);
+		Event Player.my_positon = Position Of(Event Player);
+		Event Player.target_positoin = Position Of(Global.current_boss);
+		Teleport(Event Player, Event Player.target_positoin);
+		Teleport(Global.current_boss, Event Player.my_positon);
+		Destroy Effect(Event Player.beam_effect_id1);
+		Destroy In-World Text(Event Player.world_txt_id1);
+		Set Ability Cooldown(Event Player, Button(Ability 2), 10);
+		Wait(10, Ignore Condition);
+		Clear Status(Event Player, Frozen);
+		Clear Status(Event Player, Phased Out);
+		Clear Status(Global.current_boss, Frozen);
+		Clear Status(Global.current_boss, Phased Out);
+	}
+}
+
+rule("半藏初始化")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		Hanzo;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+	}
+
+	actions
+	{
+		Wait(1, Ignore Condition);
+		Disallow Button(Event Player, Button(Ultimate));
+	}
+}
+
+rule("半藏Q（for）")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		Hanzo;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Is Button Held(Event Player, Button(Ultimate)) == True;
+		Ultimate Charge Percent(Event Player) >= 100;
+	}
+
+	actions
+	{
+		Allow Button(Event Player, Button(Ultimate));
+		Set Status(Event Player, Null, Phased Out, 20);
+		For Player Variable(Event Player, i1, 0, 3, 1);
+			Press Button(Event Player, Button(Ultimate));
+			Set Ultimate Charge(Event Player, 100);
+			Wait(0.016, Ignore Condition);
+			Wait Until(!Is Using Ultimate(Event Player), 20);
+		End;
+		Set Ultimate Charge(Event Player, 0);
+		Disallow Button(Event Player, Button(Ultimate));
+		Clear Status(Event Player, Phased Out);
+	}
+}
+
+rule("托比昂无限Q")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		Torbjörn;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Ultimate Charge Percent(Event Player) < 100;
+	}
+
+	actions
+	{
+		Set Ultimate Charge(Event Player, 100);
+	}
+}
+
+rule("托比昂E加速")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		Torbjörn;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Is Using Ability 2(Event Player) == True;
+	}
+
+	actions
+	{
+		Set Move Speed(Event Player, 500);
+		Wait Until(!Is Using Ability 2(Event Player), 20);
+		Set Move Speed(Event Player, 100);
+	}
+}
+
+rule("大锤Q")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		Reinhardt;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Is Using Ultimate(Event Player) == True;
+	}
+
+	actions
+	{
+		Damage(Global.current_boss, Event Player, 100);
+		Set Status(Global.current_boss, Event Player, Knocked Down, 2);
+	}
+}
+
+rule("大锤shift")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		Reinhardt;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Is Using Ability 1(Event Player) == True;
+		Is Button Held(Event Player, Button(Primary Fire)) == True;
+	}
+
+	actions
+	{
+		disabled Set Move Speed(Event Player, 500);
+		disabled Wait Until(!(Is Button Held(Event Player, Button(Primary Fire)) && Is Using Ability 1(Event Player)), 20);
+		disabled Set Move Speed(Event Player, 100);
+		Event Player.target_player = Global.current_boss;
+		Call Subroutine(rein_shift_trace);
+	}
+}
+
+rule("大锤shift（loop）")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		Reinhardt;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Is Using Ability 1(Event Player) == True;
+		Is Button Held(Event Player, Button(Ability 2)) == True;
+	}
+
+	actions
+	{
+		Wait(0.016, Ignore Condition);
+		Apply Impulse(Event Player, -1 * Facing Direction Of(Event Player), Speed Of(Event Player), To World, Cancel Contrary Motion XYZ);
+		Loop If Condition Is True;
+	}
+}
+
+rule("法鸡无限Q")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		Pharah;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Ultimate Charge Percent(Event Player) < 100;
+		Is On Ground(Event Player) == True;
+	}
+
+	actions
+	{
+		Set Ultimate Charge(Event Player, 100);
+	}
+}
+
+rule("星星Q")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		Winston;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Is Using Ultimate(Event Player) == True;
+	}
+
+	actions
+	{
+		Set Status(Event Player, Event Player, Unkillable, 9999);
+		Wait Until(!Is Using Ultimate(Event Player), 20);
+		Heal(Event Player, Null, 100000);
+		Clear Status(Event Player, Unkillable);
+	}
+}
+
+rule("星星自动Q")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		Winston;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Global.current_boss.boss_using_ultim == True;
+	}
+
+	actions
+	{
+		Press Button(Event Player, Button(Ultimate));
+	}
+}
+
+rule("百合一帧锁头")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		Widowmaker;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Is Firing Secondary(Event Player) == True;
+		Is Button Held(Event Player, Button(Primary Fire)) == True;
+	}
+
+	actions
+	{
+		Allow Button(Event Player, Button(Primary Fire));
+		Event Player.facing_direction = Facing Direction Of(Event Player);
+		Set Status(Global.current_boss, Null, Rooted, 9999);
+		Set Status(Event Player, Null, Rooted, 9999);
+		Start Facing(Event Player, Direction Towards(Vector(0, Event Player.eye_height, 0) + Event Player, Vector(0,
+			Global.current_boss.eye_height, 0) + Global.current_boss), 10000, To World, Direction and Turn Rate);
+		Wait Until(Angle Between Vectors(Facing Direction Of(Event Player), Direction Towards(Eye Position(Event Player), Eye Position(
+			Global.current_boss))) < 1, 1);
+		Press Button(Event Player, Button(Primary Fire));
+		Stop Facing(Event Player);
+		Set Facing(Event Player, Event Player.facing_direction, To World);
+		Clear Status(Event Player, Rooted);
+		Clear Status(Global.current_boss, Rooted);
+		Disallow Button(Event Player, Button(Primary Fire));
+	}
+}
+
+rule("百合初始化")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		Widowmaker;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+	}
+
+	actions
+	{
+		Wait(1, Ignore Condition);
+		Disallow Button(Event Player, Button(Primary Fire));
+		Set Damage Dealt(Event Player, 200);
+		Set Move Speed(Event Player, 250);
+	}
+}
+
+rule("堡垒移动（loop）")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		Bastion;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Is In Alternate Form(Event Player) == True;
+		Is Button Held(Event Player, Button(Melee)) == True;
+	}
+
+	actions
+	{
+		Apply Impulse(Event Player, Facing Direction Of(Event Player) * Vector(1, 0, 1), 30, To World, Incorporate Contrary Motion);
+		Wait(0.016, Ignore Condition);
+		Loop If Condition Is True;
+	}
+}
+
+rule("堡垒初始化")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		Bastion;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+	}
+
+	actions
+	{
+		Wait(1, Ignore Condition);
+		Set Damage Dealt(Event Player, 350);
+	}
+}
+
+rule("秩序之光Q")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		Symmetra;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Is Using Ultimate(Event Player) == True;
+	}
+
+	actions
+	{
+		Create In-World Text(All Players(All Teams), Custom String("十字界限！！！"), Vector(0, 2, 0) + Event Player, 4, Do Not Clip,
+			Visible To Position and String, Color(Yellow), Default Visibility);
+		Event Player.world_txt_id1 = Last Text ID;
+		Create Beam Effect(All Players(All Teams), Winston Tesla Cannon Beam, Vector(-20, 1.500, 0), Vector(20, 1.500, 0), Color(Blue),
+			Visible To Position and Radius);
+		Event Player.beam_effect_id1 = Last Created Entity;
+		Create Beam Effect(All Players(All Teams), Winston Tesla Cannon Beam, Vector(0, 1.500, -20), Vector(0, 1.500, 20), Color(Blue),
+			Visible To Position and Radius);
+		Event Player.beam_effect_id2 = Last Created Entity;
+		Global.sym_using_ultm = True;
+		Wait Until(!Is Using Ultimate(Event Player), 20);
+		disabled While(Is Using Ultimate(Event Player));
+		disabled Global.sym_using_ultm = True;
+		disabled Wait(0.016, Ignore Condition);
+		disabled End;
+		Destroy Effect(Event Player.beam_effect_id1);
+		Destroy Effect(Event Player.beam_effect_id2);
+		Destroy In-World Text(Event Player.world_txt_id1);
+		Global.sym_using_ultm = False;
+	}
+}
+
+rule("秩序之光Q")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 2;
+		All;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Distance Between(Left * Event Player, Vector(0, 0, 0)) <= 2;
+		Global.sym_using_ultm == True;
+	}
+
+	actions
+	{
+		Set Status(Event Player, Null, Stunned, 1);
+		Apply Impulse(Global.current_boss, Direction Towards(Vector(0, 0, 0), Left * Global.current_boss), 10, To World,
+			Incorporate Contrary Motion);
+	}
+}
+
+rule("秩序之光Q")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 2;
+		All;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Distance Between(Forward * Event Player, Vector(0, 0, 0)) <= 2;
+		Global.sym_using_ultm == True;
+	}
+
+	actions
+	{
+		Set Status(Event Player, Null, Stunned, 1);
+		Apply Impulse(Global.current_boss, Direction Towards(Vector(0, 0, 0), Forward * Global.current_boss), 10, To World,
+			Incorporate Contrary Motion);
+	}
+}
+
+rule("sym a2")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		Symmetra;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Is Button Held(Event Player, Button(Ability 2)) == True;
+		Has Status(Event Player, Hacked) != True;
+		Has Status(Event Player, Knocked Down) != True;
+		Has Status(Event Player, Asleep) != True;
+		Has Status(Event Player, Frozen) != True;
+		Has Status(Event Player, Stunned) != True;
+		Is Dummy Bot(Event Player) != True;
+	}
+
+	actions
+	{
+		Wait(0.016, Ignore Condition);
+		Wait Until(!Is Button Held(Event Player, Button(Primary Fire)) || Is Dead(Event Player), 99999);
+		Create Effect(Event Player, Light Shaft, Color(Sky Blue), Vector(1, 0, 1) * Event Player, 1, Visible To Position and Radius);
+		Event Player.effect_sym_a2_id1 = Last Created Entity;
+		Create Effect(Event Player, Light Shaft, Color(Sky Blue), Nearest Walkable Position(Ray Cast Hit Position(Update Every Frame(
+			Eye Position(Event Player)), Update Every Frame(Eye Position(Event Player)) + Facing Direction Of(Event Player) * 50, Null,
+			All Players(All Teams), False)), 1, Visible To Position and Radius);
+		Event Player.effect_sym_a2_id2 = Last Created Entity;
+		disabled Wait(1, Ignore Condition);
+		disabled Wait Until(!(Is Button Held(Event Player, Button(Primary Fire)) && Is Button Held(Event Player, Button(Secondary Fire))), 99999);
+		Wait Until(Is Dead(Event Player) || Is Button Held(Event Player, Button(Primary Fire)) || Is Button Held(Event Player, Button(
+			Secondary Fire)) || Is Button Held(Event Player, Button(Ability 1)) || Has Status(Event Player, Hacked) || Has Status(
+			Event Player, Knocked Down) || Has Status(Event Player, Asleep) || Has Status(Event Player, Frozen) || Has Status(Event Player,
+			Stunned), 99999);
+		If(Is Button Held(Event Player, Button(Primary Fire)));
+			Create In-World Text(All Players(All Teams), Custom String("传送门，互动键传送"), Global.effect_sym_a2_position1, 2, Do Not Clip,
+				Visible To Position and String, Color(Yellow), Default Visibility);
+			Global.sym_a2_hud_d1 = Last Text ID;
+			Create In-World Text(All Players(All Teams), Custom String("传送门，互动键传送"), Global.effect_sym_a2_position2, 2, Do Not Clip,
+				Visible To Position and String, Color(Yellow), Default Visibility);
+			Global.sym_a2_hud_d2 = Last Text ID;
+			Create Effect(All Players(All Teams), Light Shaft, Color(Sky Blue), Vector(1, 0, 1) * Position Of(Event Player), 1, None);
+			Global.effect_sym_a2_position1 = Position Of(Event Player) * Vector(1, 0, 1);
+			Global.effect_sym_a2_id1 = Last Created Entity;
+			Create Effect(All Players(All Teams), Light Shaft, Color(Sky Blue), Nearest Walkable Position(Ray Cast Hit Position(
+				Update Every Frame(Eye Position(Event Player)), Update Every Frame(Eye Position(Event Player)) + Facing Direction Of(
+				Event Player) * Global.diagnal_distance, Null, All Players(All Teams), False)), 1, None);
+			Global.effect_sym_a2_position2 = Nearest Walkable Position(Ray Cast Hit Position(Update Every Frame(Eye Position(Event Player)),
+				Update Every Frame(Eye Position(Event Player)) + Facing Direction Of(Event Player) * Global.diagnal_distance, Null,
+				All Players(All Teams), False));
+			Global.effect_sym_a2_id2 = Last Created Entity;
+			Destroy Effect(Event Player.effect_sym_a2_id1);
+			Destroy Effect(Event Player.effect_sym_a2_id2);
+		End;
+		Destroy Effect(Event Player.effect_sym_a2_id1);
+		Destroy Effect(Event Player.effect_sym_a2_id2);
+	}
+}
+
+rule("sym a2")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		Symmetra;
+	}
+
+	conditions
+	{
+		Is Button Held(Event Player, Button(Ability 2)) == True;
+		Is Dummy Bot(Event Player) != True;
+		Has Status(Event Player, Hacked) != True;
+		Entity Exists(Global.effect_sym_a2_id1) == True;
+		Entity Exists(Global.effect_sym_a2_id2) == True;
+		Has Status(Event Player, Knocked Down) != True;
+		Has Status(Event Player, Asleep) != True;
+		Has Status(Event Player, Frozen) != True;
+		Has Status(Event Player, Stunned) != True;
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+	}
+
+	actions
+	{
+		Destroy Effect(Global.effect_sym_a2_id1);
+		Destroy Effect(Global.effect_sym_a2_id2);
+		Destroy In-World Text(Global.sym_a2_hud_d1);
+		Destroy In-World Text(Global.sym_a2_hud_d2);
+	}
+}
+
+rule("sym a2")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		All;
+	}
+
+	conditions
+	{
+		Entity Exists(Global.effect_sym_a2_id1) == True;
+		Entity Exists(Global.effect_sym_a2_id2) == True;
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Is Button Held(Event Player, Button(Interact)) == True;
+		(Distance Between(Event Player * Vector(1, 0, 1), Global.effect_sym_a2_position1) <= 1 || Distance Between(Event Player * Vector(1,
+			0, 1), Global.effect_sym_a2_position2) <= 1) == True;
+	}
+
+	actions
+	{
+		If(Distance Between(Event Player * Vector(1, 0, 1), Global.effect_sym_a2_position1) <= 1);
+			Teleport(Event Player, Global.effect_sym_a2_position2 * Vector(1, 0, 1) + Up * Event Player);
+		Else;
+			Teleport(Event Player, Global.effect_sym_a2_position1 * Vector(1, 0, 1) + Up * Event Player);
+		End;
+		Big Message(Event Player, Custom String("传送成功，传送冷却3s"));
+		disabled Wait Until(!Is Button Held(Event Player, Button(Interact)), 10);
+		Wait(3, Ignore Condition);
+	}
+}
+
+rule("和尚Q")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		Zenyatta;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Is Using Ultimate(Event Player) == True;
+	}
+
+	actions
+	{
+		Set Status(All Players(Team 1), Null, Phased Out, 20);
+		Create In-World Text(All Players(All Teams), Custom String("遁入虚空！！！"), Vector(0, 2, 0) + Event Player, 4, Do Not Clip,
+			Visible To Position and String, Color(Orange), Default Visibility);
+		Event Player.world_txt_id1 = Last Text ID;
+		Wait Until(!Is Using Ultimate(Event Player), 20);
+		Clear Status(All Players(Team Of(Event Player)), Phased Out);
+		Destroy In-World Text(Event Player.world_txt_id1);
+	}
+}
+
+rule("和尚V")
+{
+	event
+	{
+		Player Dealt Damage;
+		Team 1;
+		Zenyatta;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Is Meleeing(Event Player) == True;
+		Distance Between(Event Player, Global.current_boss) <= 5;
+	}
+
+	actions
+	{
+		Apply Impulse(Global.current_boss, Facing Direction Of(Event Player) * Vector(1, 0, 1), 70, To World, Incorporate Contrary Motion);
+	}
+}
+
+rule("源氏Q加速")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		Genji;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Is Using Ultimate(Event Player) == True;
+	}
+
+	actions
+	{
+		Set Damage Received(Event Player, 50);
+		Set Move Speed(Event Player, 150);
+		Wait Until(!Is Using Ultimate(Event Player), 20);
+		Set Move Speed(Event Player, 100);
+		Set Damage Received(Event Player, 100);
+	}
+}
+
+rule("源氏初始化")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		Genji;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+	}
+
+	actions
+	{
+		Wait(1, Ignore Condition);
+		Set Damage Dealt(Event Player, 200);
+	}
+}
+
+rule("源氏左键")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		Genji;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Firing Primary(Event Player) == True;
+		Is Alive(Event Player) == True;
+	}
+
+	actions
+	{
+		Set Projectile Speed(Event Player, 100);
+		Wait(0.016, Ignore Condition);
+		Loop If Condition Is True;
+	}
+}
+
+rule("源氏Q吸血")
+{
+	event
+	{
+		Player Dealt Damage;
+		Team 1;
+		Genji;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Is Using Ultimate(Event Player) == True;
+	}
+
+	actions
+	{
+		Heal(Event Player, Event Player, Event Damage);
+	}
+}
+
+rule("路霸Q")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		Roadhog;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Is Using Ultimate(Event Player) == True;
+	}
+
+	actions
+	{
+		Set Move Speed(Event Player, 300);
+		Start Facing(Event Player, Direction Towards(Event Player, Global.current_boss), 10000, To World, Direction and Turn Rate);
+		Wait(1, Ignore Condition);
+		Wait Until(!Is Using Ultimate(Event Player), 20);
+		Stop Facing(Event Player);
+		Set Move Speed(Event Player, 100);
+	}
+}
+
+rule("麦爹Q")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		McCree;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Is Using Ultimate(Event Player) == True;
+	}
+
+	actions
+	{
+		Set Move Speed(Event Player, 700);
+		Wait Until(!Is Using Ultimate(Event Player), 20);
+		Wait(1, Ignore Condition);
+		Set Move Speed(Event Player, 100);
+	}
+}
+
+rule("麦爹shift")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		McCree;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Is Using Ability 1(Event Player) == True;
+	}
+
+	actions
+	{
+		Apply Impulse(Event Player, Vector(Speed Of In Direction(Event Player, Left), 0, Speed Of In Direction(Event Player, Forward)),
+			12.500, To World, Incorporate Contrary Motion);
+	}
+}
+
+rule("狂鼠E")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		Junkrat;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Is Button Held(Event Player, Button(Ability 2)) == True;
+		Global.boss_choosing_hero != True;
+		Has Status(Event Player, Hacked) != True;
+		Has Status(Event Player, Knocked Down) != True;
+		Has Status(Event Player, Asleep) != True;
+		Has Status(Event Player, Frozen) != True;
+		Has Status(Event Player, Stunned) != True;
+	}
+
+	actions
+	{
+		Event Player.my_positon = Position Of(Event Player);
+		Set Status(Global.current_boss, Null, Rooted, 2);
+		Wait(1, Ignore Condition);
+		Teleport(Global.current_boss, Event Player.my_positon);
+		Wait(5, Ignore Condition);
+		Set Ability Cooldown(Event Player, Button(Ability 2), 0);
+	}
+}
+
+rule("毛妹shift")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		Zarya;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Is Using Ability 1(Event Player) == True;
+	}
+
+	actions
+	{
+		Set Damage Received(Event Player, 1000);
+		Wait Until(!Is Using Ability 1(Event Player), 20);
+		Set Damage Received(Event Player, 100);
+	}
+}
+
+rule("毛妹shift")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		Zarya;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Is Using Ability 1(Event Player) != True;
+		Has Status(Event Player, Hacked) != True;
+		Has Status(Event Player, Knocked Down) != True;
+		Has Status(Event Player, Asleep) != True;
+		Has Status(Event Player, Frozen) != True;
+		Has Status(Event Player, Stunned) != True;
+	}
+
+	actions
+	{
+		Press Button(Event Player, Button(Ability 1));
+	}
+}
+
+rule("76初始化")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		Soldier: 76;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+	}
+
+	actions
+	{
+		Wait(1, Ignore Condition);
+		Set Damage Dealt(Event Player, 500);
+	}
+}
+
+rule("DJ治疗")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		All;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Health(Event Player) < Max Health(Event Player);
+		Is True For Any(Players On Hero(Hero(Lúcio), Team Of(Event Player)), !(Is In Alternate Form(Current Array Element) || Has Status(
+			Current Array Element, Hacked))) == True;
+	}
+
+	actions
+	{
+		Start Heal Over Time(Event Player, Filtered Array(Players On Hero(Hero(Lúcio), Team Of(Event Player)), !Has Status(
+			Current Array Element, Hacked) && !Is In Alternate Form(Current Array Element)), 9999, 50);
+		Wait Until(Is True For All(Players On Hero(Hero(Lúcio), Team Of(Event Player)), Has Status(Current Array Element, Hacked)
+			|| Is In Alternate Form(Current Array Element)), 99999);
+		Stop All Heal Over Time(Event Player);
+	}
+}
+
+rule("DJ加速")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		Lúcio;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Is In Alternate Form(Event Player) == True;
+		Is Using Ability 2(Event Player) == True;
+	}
+
+	actions
+	{
+		Set Move Speed(Event Player, 300);
+		Wait Until(!(Is Using Ability 2(Event Player) && Is In Alternate Form(Event Player)), 20);
+		Set Move Speed(Event Player, 100);
+	}
+}
+
+rule("DVA无限Q")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		D.Va;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Ultimate Charge Percent(Event Player) < 100;
+		Is In Alternate Form(Event Player) == True;
+	}
+
+	actions
+	{
+		Set Ultimate Charge(Event Player, 100);
+	}
+}
+
+rule("美滑冰")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		Mei;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Is Firing Primary(Event Player) == True;
+		Vertical Angle From Direction(Facing Direction Of(Event Player)) >= 10;
+	}
+
+	actions
+	{
+		Set Move Speed(Event Player, 300);
+		Wait Until(!(Is Firing Primary(Event Player) && Vertical Angle From Direction(Facing Direction Of(Event Player)) >= 10), 99999);
+		Set Move Speed(Event Player, 100);
+	}
+}
+
+rule("美左键")
+{
+	event
+	{
+		Player Dealt Damage;
+		Team 1;
+		Mei;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Is Using Ultimate(Event Player) == True;
+	}
+
+	actions
+	{
+		Set Status(Victim, Event Player, Hacked, 1);
+		Set Status(Victim, Event Player, Rooted, 1);
+		Event Player.mark1 = Random Integer(0, 2);
+		If(Event Player.mark1 == 0);
+			Set Status(Victim, Event Player, Knocked Down, 1);
+		Else If(Event Player.mark1 == 1);
+			Set Status(Victim, Event Player, Frozen, 1);
+		Else If(Event Player.mark1 == 2);
+			Set Status(Victim, Event Player, Stunned, 1);
+		End;
+		Clear Status(Victim, Knocked Down);
+		Clear Status(Victim, Frozen);
+		Clear Status(Victim, Stunned);
+	}
+}
+
+rule("黑影隐身")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		Sombra;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+	}
+
+	actions
+	{
+		Wait(1, Ignore Condition);
+		Set Invisible(Event Player, Enemies);
+		Set Healing Received(Event Player, 0);
+	}
+}
+
+rule("黑影侵入")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 2;
+		Slot 0;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Has Status(Event Player, Hacked) == True;
+		Is Hero Being Played(Hero(Sombra), Team 1) == True;
+		Global.boss_choosing_hero != True;
+	}
+
+	actions
+	{
+		If(Hero Of(Event Player) == Hero(Reinhardt));
+			Set Move Speed(Event Player, 200);
+			Wait Until(!Has Status(Event Player, Hacked), 99999);
+			Set Move Speed(Event Player, 100);
+		Else If(Hero Of(Event Player) == Hero(D.Va));
+			Start Facing(Event Player, Direction Towards(Event Player, Hero Of(Closest Player To(Event Player, Team Of(Event Player))) == Hero(
+				Sombra) ? Closest Player To(Closest Player To(Event Player, Opposite Team Of(Team Of(Event Player))), Team Of(
+				Closest Player To(Event Player, Opposite Team Of(Team Of(Event Player))))) : Closest Player To(Event Player, Opposite Team Of(
+				Team Of(Event Player)))), 10000, To World, Direction and Turn Rate);
+			Wait Until(!Has Status(Event Player, Hacked), 99999);
+			Stop Facing(Event Player);
+		End;
+	}
+}
+
+disabled rule("铁拳右键（while）")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		Doomfist;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Is Button Held(Event Player, Button(Interact)) == True;
+		Is Firing Secondary(Event Player) == True;
+		Ultimate Charge Percent(Event Player) >= 100;
+		Global.boss_choosing_hero != True;
+		Is Alive(Global.current_boss) == True;
+	}
+
+	actions
+	{
+		Set Status(Event Player, Null, Phased Out, 20);
+		Start Facing(Event Player, Direction Towards(Event Player, Global.current_boss), 10000, To World, Direction and Turn Rate);
+		Set Move Speed(Event Player, 300);
+		Create In-World Text(All Players(All Teams), Custom String("啊啊啊！！！"), Vector(0, 2, 0) + Event Player, 4, Do Not Clip,
+			Visible To Position and String, Color(Purple), Default Visibility);
+		Event Player.world_txt_id1 = Last Text ID;
+		Event Player.time_count1 = 10;
+		Chase Player Variable Over Time(Event Player, time_count1, 0, 10, Destination and Duration);
+		While(Event Player.time_count1 > 0);
+			Press Button(Event Player, Button(Secondary Fire));
+			Wait Until(!Is Firing Secondary(Event Player), 99999);
+			Wait(0.016, Ignore Condition);
+			Cancel Primary Action(Event Player);
+			Set Ultimate Charge(Event Player, Event Player.time_count1 * 10);
+		End;
+		Set Move Speed(Event Player, 100);
+		Stop Facing(Event Player);
+		Destroy In-World Text(Event Player.world_txt_id1);
+		Clear Status(Event Player, Phased Out);
+	}
+}
+
+rule("doo ab canc")
+{
+	event
+	{
+		Player Dealt Damage;
+		Team 1;
+		Doomfist;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Array Contains(Array(Button(Secondary Fire), Button(Ability 1), Button(Ability 2)), Event Ability) == True;
+	}
+
+	actions
+	{
+		Cancel Primary Action(Event Player);
+	}
+}
+
+rule("an ul")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		Ana;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Is Using Ultimate(Event Player) == True;
+	}
+
+	actions
+	{
+		Create In-World Text(All Players(All Teams), Custom String("你们都被强化了，快去睡了BOSS！！！"), Vector(0, 2, 0) + Event Player, 4, Do Not Clip,
+			Visible To Position and String, Color(Sky Blue), Default Visibility);
+		Event Player.world_txt_id1 = Last Text ID;
+		Wait Until(!Is Using Ultimate(Event Player), 20);
+		Destroy In-World Text(Event Player.world_txt_id1);
+	}
+}
+
+rule("an q")
+{
+	event
+	{
+		Player Dealt Damage;
+		Team 1;
+		All;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is True For Any(Players On Hero(Hero(Ana), Team Of(Event Player)), Is Using Ultimate(Current Array Element)) == True;
+		Is Alive(Event Player) == True;
+	}
+
+	actions
+	{
+		Damage(Victim, Filtered Array(Players On Hero(Hero(Ana), Team Of(Event Player)), Is Using Ultimate(Current Array Element)),
+			Event Damage / 2);
+		Set Status(Victim, Filtered Array(Players On Hero(Hero(Ana), Team Of(Event Player)), Is Using Ultimate(Current Array Element)),
+			Asleep, 5);
+	}
+}
+
+rule("an ul")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		All;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Is True For Any(Players On Hero(Hero(Ana), Team Of(Event Player)), Is Using Ultimate(Current Array Element)) == True;
+	}
+
+	actions
+	{
+		Create Effect(All Players(All Teams), Ana Nano Boosted Effect, Color(White), Event Player, 1, Visible To Position and Radius);
+		Event Player.ana_nano_effect_id = Last Created Entity;
+		Wait Until(Is True For All(Players On Hero(Hero(Ana), Team Of(Event Player)), !Is Using Ultimate(Current Array Element)), 20);
+		Destroy Effect(Event Player.ana_nano_effect_id);
+	}
+}
+
+rule("ori a2")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		Orisa;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Is Using Ability 1(Event Player) != True;
+		Has Status(Event Player, Hacked) != True;
+		Has Status(Event Player, Knocked Down) != True;
+		Has Status(Event Player, Asleep) != True;
+		Has Status(Event Player, Frozen) != True;
+		Has Status(Event Player, Stunned) != True;
+		Has Spawned(Event Player) == True;
+	}
+
+	actions
+	{
+		Press Button(Event Player, Button(Ability 1));
+	}
+}
+
+rule("ori ul")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		Orisa;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Is Using Ultimate(Event Player) == True;
+	}
+
+	actions
+	{
+		Create In-World Text(All Players(All Teams), Custom String("放心，有我在！！！"), Vector(0, 2, 0) + Event Player, 4, Do Not Clip,
+			Visible To Position and String, Color(Lime Green), Default Visibility);
+		Event Player.world_txt_id1 = Last Text ID;
+		disabled Set Status(All Players(Team Of(Event Player)), Event Player, Invincible, 20);
+		Wait Until(!Is Using Ultimate(Event Player), 20);
+		disabled Clear Status(All Players(Team Of(Event Player)), Invincible);
+		Destroy In-World Text(Event Player.world_txt_id1);
+	}
+}
+
+rule("ori ul")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		All;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Is True For Any(Players On Hero(Hero(Orisa), Team Of(Event Player)), Is Using Ultimate(Current Array Element)) == True;
+	}
+
+	actions
+	{
+		Set Status(All Players(Team Of(Event Player)), Event Player, Invincible, 20);
+		Wait Until(Is True For All(Players On Hero(Hero(Orisa), Team Of(Event Player)), !Is Using Ultimate(Current Array Element)), 99999);
+		Clear Status(All Players(Team Of(Event Player)), Invincible);
+	}
+}
+
+rule("bri infinite pri hud")
+{
+	event
+	{
+		Player Dealt Damage;
+		Team 1;
+		Brigitte;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Is Using Ultimate(Event Player) == True;
+		Event Ability == Button(Primary Fire);
+		Is Button Held(Event Player, Button(Secondary Fire)) == True;
+	}
+
+	actions
+	{
+		Create In-World Text(All Players(All Teams), Custom String("哼哼哼啊啊啊啊啊啊！！！"), Vector(0, 2, 0) + Event Player, 4, Do Not Clip,
+			Visible To Position and String, Color(Orange), Default Visibility);
+		Event Player.world_txt_id1 = Last Text ID;
+		Wait Until(!(Has Status(Victim, Stunned) && Is Using Ultimate(Event Player)), 20);
+		Destroy In-World Text(Event Player.world_txt_id1);
+	}
+}
+
+rule("bri shift 2 pri")
+{
+	event
+	{
+		Player Dealt Damage;
+		Team 1;
+		Brigitte;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Event Ability == Button(Ability 1);
+	}
+
+	actions
+	{
+		Set Ability Cooldown(Event Player, Button(Primary Fire), 0);
+	}
+}
+
+rule("bri infinite pri")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		Brigitte;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Is Using Ultimate(Event Player) == True;
+		Ability Cooldown(Event Player, Button(Primary Fire)) != 0;
+	}
+
+	actions
+	{
+		Set Ability Cooldown(Event Player, Button(Primary Fire), 0);
+	}
+}
+
+rule("莫伊拉大招（for）")
+{
+	event
+	{
+		Player Dealt Damage;
+		Team 1;
+		Moira;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Is Using Ultimate(Event Player) == True;
+		Event Ability == Button(Ultimate);
+	}
+
+	actions
+	{
+		Set Ultimate Charge(Victim, Ultimate Charge Percent(Victim) - 2);
+		For Player Variable(Event Player, i1, 0, Count Of(All Players(Team Of(Event Player))), 1);
+			Wait(0.016, Ignore Condition);
+			Event Player.player_i = All Players(Team Of(Event Player))[Event Player.i1];
+			Set Ultimate Charge(Event Player.player_i, Ultimate Charge Percent(Event Player.player_i) + 2);
+		End;
+		Wait(1.500, Ignore Condition);
+	}
+}
+
+rule("莫伊拉大招")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		Moira;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Is Using Ultimate(Event Player) == True;
+	}
+
+	actions
+	{
+		Create In-World Text(All Players(All Teams), Custom String("吸星大法！！！"), Vector(0, 2, 0) + Event Player, 4, Clip Against Surfaces,
+			Visible To Position and String, Color(Lime Green), Default Visibility);
+		Event Player.world_txt_id1 = Last Text ID;
+		Wait Until(!Is Using Ultimate(Event Player), 20);
+		Destroy In-World Text(Event Player.world_txt_id1);
+	}
+}
+
+rule("仓鼠蹲")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		Wrecking Ball;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Is Button Held(Event Player, Button(Crouch)) == True;
+		Has Status(Event Player, Hacked) != True;
+		Has Status(Event Player, Knocked Down) != True;
+		Has Status(Event Player, Asleep) != True;
+		Has Status(Event Player, Frozen) != True;
+		Has Status(Event Player, Stunned) != True;
+	}
+
+	actions
+	{
+		Apply Impulse(Event Player, Up, 70, To World, Incorporate Contrary Motion);
+		Wait(0.500, Ignore Condition);
+	}
+}
+
+rule("仓鼠E")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		Wrecking Ball;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Is Using Ability 2(Event Player) != True;
+		Has Status(Event Player, Hacked) != True;
+		Has Status(Event Player, Knocked Down) != True;
+		Has Status(Event Player, Asleep) != True;
+		Has Status(Event Player, Frozen) != True;
+		Has Status(Event Player, Stunned) != True;
+	}
+
+	actions
+	{
+		Press Button(Event Player, Button(Ability 2));
+	}
+}
+
+rule("艾什E（loop）")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		Ashe;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Is Using Ability 2(Event Player) == True;
+	}
+
+	actions
+	{
+		Press Button(Event Player, Button(Ability 2));
+		Wait(0.150, Ignore Condition);
+		Cancel Primary Action(Event Player);
+		Loop If Condition Is True;
+	}
+}
+
+rule("艾什免疫")
+{
+	event
+	{
+		Player Took Damage;
+		Team 1;
+		Ashe;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Attacker == Event Player;
+	}
+
+	actions
+	{
+		Heal(Event Player, Event Player, Event Damage);
+	}
+}
+
+rule("巴蒂左键")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		Baptiste;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Is Firing Primary(Event Player) == True;
+	}
+
+	actions
+	{
+		disabled Wait(0.016, Ignore Condition);
+		disabled Set Projectile Speed(Event Player, 100);
+		disabled If(Event Player.other_mark != Custom String("badi left mouse"));
+		disabled Event Player.other_mark = Custom String("badi left mouse");
+		Start Facing(Event Player, Direction Towards(Event Player, Global.current_boss), 10000, To World, Direction and Turn Rate);
+		disabled End;
+		disabled Loop If Condition Is True;
+		Wait Until(!Is Firing Primary(Event Player), 99999);
+		Stop Facing(Event Player);
+		disabled Event Player.other_mark = 0;
+	}
+}
+
+rule("西格玛初始化")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		Sigma;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+	}
+
+	actions
+	{
+		Wait(1, Ignore Condition);
+		Disallow Button(Event Player, Button(Ultimate));
+	}
+}
+
+rule("西格玛Q")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		Sigma;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Is Button Held(Event Player, Button(Ultimate)) == True;
+		Ultimate Charge Percent(Event Player) >= 100;
+	}
+
+	actions
+	{
+		Create In-World Text(All Players(All Teams), Custom String("无重力领域！！！"), Event Player, 4, Do Not Clip,
+			Visible To Position and String, Color(Blue), Default Visibility);
+		Event Player.sigma_ultm_hud_id = Last Text ID;
+		Set Ultimate Charge(Event Player, 0);
+		Event Player.time_count1 = 0;
+		Global.sigma_using_ultm = True;
+		Chase Player Variable Over Time(Event Player, time_count1, 11, 11, Destination and Duration);
+		Wait Until(Event Player.time_count1 >= 10, 20);
+		Global.sigma_using_ultm = False;
+		Destroy In-World Text(Event Player.sigma_ultm_hud_id);
+	}
+}
+
+rule("西格玛Q")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 1;
+		All;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Global.sigma_using_ultm == True;
+	}
+
+	actions
+	{
+		Set Gravity(Event Player, 0);
+		While(Global.sigma_using_ultm);
+			Wait(0.016, Ignore Condition);
+			If(Is Button Held(Event Player, Button(Jump)));
+				Apply Impulse(Event Player, Up, 1, To World, Incorporate Contrary Motion);
+			Else If(Is Button Held(Event Player, Button(Crouch)));
+				Apply Impulse(Event Player, Down, 1, To World, Incorporate Contrary Motion);
+			End;
+		End;
+		Set Gravity(Event Player, 100);
+	}
+}
+
+rule("秩序之光清除Q")
+{
+	event
+	{
+		Ongoing - Global;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Hero Being Played(Hero(Symmetra), Team 1) != True;
+		Global.sym_using_ultm == True;
+	}
+
+	actions
+	{
+		Global.sym_using_ultm = False;
+	}
+}
+
+disabled rule("安娜清除Q")
+{
+	event
+	{
+		Ongoing - Global;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Hero Being Played(Hero(Ana), Team 1) != True;
+		Global.ana_using_ultm == True;
+	}
+
+	actions
+	{
+		Global.ana_using_ultm = False;
+	}
+}
+
+rule("西格玛清除Q")
+{
+	event
+	{
+		Ongoing - Global;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Hero Being Played(Hero(Sigma), Team 1) != True;
+		Global.sigma_using_ultm == True;
+	}
+
+	actions
+	{
+		Global.sigma_using_ultm = False;
+	}
+}
+
+rule("boss slot died")
+{
+	event
+	{
+		Player Died;
+		Team 2;
+		Slot 0;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Global.boss_choosing_hero != True;
+	}
+
+	actions
+	{
+		Call Subroutine(clear_boss_dummy);
+	}
+}
+
+rule("boss大锤 slot 初始化")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 2;
+		Slot 0;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Global.boss_choosing_hero != True;
+		Hero Of(Event Player) == Hero(Reinhardt);
+	}
+
+	actions
+	{
+		Wait(1, Ignore Condition);
+		Disallow Button(Event Player, Button(Ultimate));
+		Set Knockback Received(Event Player, 150);
+	}
+}
+
+rule("boss大锤左键")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 2;
+		Slot 0;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Hero Of(Event Player) == Hero(Reinhardt);
+		Is Firing Primary(Event Player) == True;
+		Global.boss_choosing_hero != True;
+		Event Player.boss_using_a1 != True;
+		Event Player.boss_using_a2 != True;
+		Event Player.boss_using_se != True;
+		Event Player.boss_using_ultim != True;
+	}
+
+	actions
+	{
+		Wait Until(!(
+			Event Player.boss_using_pr || Event Player.boss_using_se || Event Player.boss_using_a1 || Event Player.boss_using_a2 || Event Player.boss_using_ultim),
+			99999);
+		Event Player.boss_using_pr = True;
+		Start Camera(Event Player, Event Player + (Vector(0, Event Player.boddy_size * Event Player.eye_height, 0) - Facing Direction Of(
+			Event Player) * 6 * Event Player.boddy_size), Event Player + Vector(0, Event Player.boddy_size * Event Player.eye_height, 0),
+			10000);
+		Wait Until(!Is Firing Primary(Event Player), 99999);
+		Stop Camera(Event Player);
+		Call Subroutine(clear_boss_dummy);
+		Wait(0.016, Ignore Condition);
+		Event Player.boss_using_pr = False;
+	}
+}
+
+rule("boss大锤右键")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 2;
+		Slot 0;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Hero Of(Event Player) == Hero(Reinhardt);
+		Is Firing Secondary(Event Player) == True;
+		Global.boss_choosing_hero != True;
+		Event Player.boss_using_a1 != True;
+		Event Player.boss_using_a2 != True;
+		Event Player.boss_using_pr != True;
+		Event Player.boss_using_ultim != True;
+	}
+
+	actions
+	{
+		Wait Until(!(
+			Event Player.boss_using_pr || Event Player.boss_using_se || Event Player.boss_using_a1 || Event Player.boss_using_a2 || Event Player.boss_using_ultim),
+			99999);
+		Event Player.boss_using_se = True;
+		Wait Until(!Is Firing Secondary(Event Player), 99999);
+		Call Subroutine(clear_boss_dummy);
+		Wait(0.016, Ignore Condition);
+		Event Player.boss_using_se = False;
+	}
+}
+
+rule("boss大锤E")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 2;
+		Slot 0;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Hero Of(Event Player) == Hero(Reinhardt);
+		Is Using Ability 2(Event Player) == True;
+		Global.boss_choosing_hero != True;
+		Event Player.boss_using_a1 != True;
+		Event Player.boss_using_pr != True;
+		Event Player.boss_using_se != True;
+		Event Player.boss_using_ultim != True;
+	}
+
+	actions
+	{
+		Wait Until(!(
+			Event Player.boss_using_pr || Event Player.boss_using_se || Event Player.boss_using_a1 || Event Player.boss_using_a2 || Event Player.boss_using_ultim),
+			99999);
+		Event Player.boss_using_a2 = True;
+		Set Invisible(Global.boss_dummy_robots, All);
+		Disallow Button(Event Player, Button(Ability 2));
+		Wait Until(Is True For All(All Players(Team Of(Event Player)), !Is Using Ability 2(Event Player)), 20);
+		Call Subroutine(clear_boss_dummy);
+		Wait(0.016, Ignore Condition);
+		Event Player.boss_using_a2 = False;
+		Allow Button(Event Player, Button(Ability 2));
+	}
+}
+
+rule("boss大锤shift")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 2;
+		Slot 0;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Hero Of(Event Player) == Hero(Reinhardt);
+		Is Using Ability 1(Event Player) == True;
+		Global.boss_choosing_hero != True;
+		Event Player.boss_using_a2 != True;
+		Event Player.boss_using_pr != True;
+		Event Player.boss_using_se != True;
+		Event Player.boss_using_ultim != True;
+	}
+
+	actions
+	{
+		Event Player.facing_direction = Facing Direction Of(Event Player);
+		Event Player.my_positon = Position Of(Event Player);
+		Wait Until(!(
+			Event Player.boss_using_pr || Event Player.boss_using_se || Event Player.boss_using_a1 || Event Player.boss_using_a2 || Event Player.boss_using_ultim),
+			99999);
+		Event Player.boss_using_a1 = True;
+		Wait Until(!Is Using Ability 1(Event Player), 20);
+		Set Status(Event Player, Null, Knocked Down, 20);
+		Wait(1, Ignore Condition);
+		Wait Until(Is True For All(All Players(Team Of(Event Player)), !Is Using Ability 1(Current Array Element)), 20);
+		Call Subroutine(clear_boss_dummy);
+		Wait(0.016, Ignore Condition);
+		Event Player.boss_using_a1 = False;
+		Clear Status(Event Player, Knocked Down);
+	}
+}
+
+rule("boss大锤Q")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 2;
+		Slot 0;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Hero Of(Event Player) == Hero(Reinhardt);
+		Global.boss_choosing_hero != True;
+		Is Button Held(Event Player, Button(Ultimate)) == True;
+		Ultimate Charge Percent(Event Player) >= 100;
+		Event Player.boss_using_a1 != True;
+		Event Player.boss_using_a2 != True;
+		Event Player.boss_using_pr != True;
+		Event Player.boss_using_se != True;
+	}
+
+	actions
+	{
+		Wait Until(!(
+			Event Player.boss_using_pr || Event Player.boss_using_se || Event Player.boss_using_a1 || Event Player.boss_using_a2 || Event Player.boss_using_ultim),
+			99999);
+		Event Player.boss_using_ultim = True;
+		Event Player.time_count1 = 0;
+		Allow Button(Event Player, Button(Ultimate));
+		Press Button(Event Player, Button(Ultimate));
+		Set Ultimate Charge(Event Player, 0);
+		Disallow Button(Event Player, Button(Ultimate));
+		Wait(0.250, Ignore Condition);
+		Set Status(All Players(Team 1), Event Player, Knocked Down, 3);
+		Wait(3, Ignore Condition);
+		Wait Until(Is True For All(All Players(Team Of(Event Player)), !Is Using Ability 1(Current Array Element)), 20);
+		Set Ultimate Charge(Event Player, 0);
+		Call Subroutine(clear_boss_dummy);
+		Wait(0.016, Ignore Condition);
+		Event Player.boss_using_ultim = False;
+		Clear Status(Event Player, Knocked Down);
+		Clear Status(Event Player, Asleep);
+	}
+}
+
+rule("boss大锤dummy Q")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 2;
+		Reinhardt;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Dummy Bot(Event Player) == True;
+		Global.current_boss.boss_using_ultim == True;
+		Global.boss_choosing_hero != True;
+		Slot Of(Event Player) != 0;
+	}
+
+	actions
+	{
+		Teleport(Event Player, Global.boss_dummy_q_position[Slot Of(Event Player) % 12]);
+		Start Facing(Event Player, Direction Towards(Event Player, Closest Player To(Event Player, Opposite Team Of(Team Of(
+			Event Player)))), 100, To World, Direction and Turn Rate);
+		Set Ultimate Charge(Event Player, 100);
+		disabled Allow Button(Event Player, Button(Ultimate));
+		Press Button(Event Player, Button(Ultimate));
+		Wait(1, Ignore Condition);
+		Press Button(Event Player, Button(Ability 1));
+		Wait Until(Is Using Ability 1(Event Player), 1);
+		Call Subroutine(rein_shift_trace);
+		Wait Until(!Is Using Ability 1(Event Player), 20);
+		Stop Throttle In Direction(Event Player);
+	}
+}
+
+disabled rule("boss大锤dummy shift")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 2;
+		Reinhardt;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Dummy Bot(Event Player) == True;
+		Global.current_boss.boss_using_a1 == True;
+		Global.boss_choosing_hero != True;
+		Slot Of(Event Player) != 0;
+	}
+
+	actions
+	{
+		Teleport(Event Player, Global.current_boss);
+		Event Player.target_player = Players In Slot(Slot Of(Event Player) % 10, Opposite Team Of(Team Of(Event Player)));
+		If(Event Player.target_player == 0);
+			Event Player.target_player = Random Value In Array(All Players(Opposite Team Of(Team Of(Event Player))));
+		End;
+		Set Facing(Event Player, Direction Towards(Event Player, Event Player.target_player), To World);
+		Wait(0.016, Ignore Condition);
+		Start Holding Button(Event Player, Button(Ability 1));
+		Wait Until(Is Using Ability 1(Event Player), 20);
+		Stop Facing(Event Player);
+		Call Subroutine(rein_shift_trace);
+	}
+}
+
+rule("boss大锤dummy shift")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 2;
+		Reinhardt;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Dummy Bot(Event Player) == True;
+		Global.current_boss.boss_using_a1 == True;
+		Global.boss_choosing_hero != True;
+		Slot Of(Event Player) != 0;
+	}
+
+	actions
+	{
+		Teleport(Event Player, Nearest Walkable Position(Global.current_boss.my_positon + World Vector Of(Left, Global.current_boss,
+			Rotation) * Global.positions_beside_boss[Slot Of(Event Player) - 1]));
+		Event Player.target_player = Players In Slot(Slot Of(Event Player) % 10, Opposite Team Of(Team Of(Event Player)));
+		If(Event Player.target_player == 0);
+			Event Player.target_player = Random Value In Array(All Players(Opposite Team Of(Team Of(Event Player))));
+		End;
+		Set Facing(Event Player, Direction Towards(Event Player, Event Player.target_player), To World);
+		Wait(0.016, Ignore Condition);
+		Start Holding Button(Event Player, Button(Ability 1));
+		Wait Until(Is Using Ability 1(Event Player), 0.016);
+		Set Move Speed(Event Player, 67);
+		Call Subroutine(rein_shift_trace);
+		Wait Until(!Is Using Ability 1(Event Player), 20);
+		Stop Throttle In Direction(Event Player);
+		Stop Accelerating(Event Player);
+		Set Move Speed(Event Player, 100);
+	}
+}
+
+disabled rule("boss大锤dummy E")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 2;
+		Reinhardt;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Dummy Bot(Event Player) == True;
+		Global.current_boss.boss_using_a2 == True;
+		Global.boss_choosing_hero != True;
+		Slot Of(Event Player) != 0;
+	}
+
+	actions
+	{
+		Start Forcing Player Position(Event Player, Global.current_boss, True);
+		disabled Set Facing(Event Player, Global.direction_12[Slot Of(Event Player) % 12], To World);
+		disabled Wait Until(Angle Between Vectors(Facing Direction Of(Event Player), Global.direction_12[Slot Of(Event Player) % 12]) <= 1, 1);
+		disabled Start Facing(Event Player, Left, 100, To Player, Direction and Turn Rate);
+		Press Button(Event Player, Button(Ability 2));
+		While(Global.current_boss.boss_using_a2);
+			disabled Set Projectile Speed(Event Player, Random Value In Array(Array(100, 150, 200, 250)));
+			Press Button(Event Player, Button(Ability 2));
+			Start Facing(Event Player, Direction Towards(Event Player, Random Value In Array(All Players(Opposite Team Of(Team Of(
+				Event Player))))), 10000, To World, Direction and Turn Rate);
+			Wait(0.500, Ignore Condition);
+			Cancel Primary Action(Event Player);
+			Wait(0.016, Ignore Condition);
+		End;
+	}
+}
+
+rule("boss大锤dummy E")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 2;
+		Reinhardt;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Dummy Bot(Event Player) == True;
+		Global.current_boss.boss_using_a2 == True;
+		Global.boss_choosing_hero != True;
+		Slot Of(Event Player) != 0;
+	}
+
+	actions
+	{
+		Press Button(Event Player, Button(Ability 2));
+		Start Forcing Player Position(Event Player, Global.current_boss, True);
+		disabled Start Facing(Event Player, Direction From Angles(Horizontal Facing Angle Of(Global.current_boss) + (5 * (Slot Of(Event Player)
+			% 12) - 27.500), Vertical Facing Angle Of(Global.current_boss)), 10000, To World, Direction and Turn Rate);
+		Start Facing(Event Player, Direction From Angles(Horizontal Facing Angle Of(Global.current_boss) + (8 * (Slot Of(Event Player)
+			% 12) - 44), Vertical Facing Angle Of(Global.current_boss)), 10000, To World, Direction and Turn Rate);
+	}
+}
+
+rule("boss大锤dummy 右键")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 2;
+		Reinhardt;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Dummy Bot(Event Player) == True;
+		Global.current_boss.boss_using_se == True;
+		Global.boss_choosing_hero != True;
+		Slot Of(Event Player) != 0;
+	}
+
+	actions
+	{
+		Start Forcing Player Position(Event Player, Global.current_boss, True);
+		Set Facing(Event Player, Global.direction_12[Slot Of(Event Player) % 12], To World);
+		Wait Until(Angle Between Vectors(Facing Direction Of(Event Player), Global.direction_12[Slot Of(Event Player) % 12]) <= 1, 1);
+		disabled Start Facing(Event Player, Left, 10000, To Player, Direction and Turn Rate);
+		Start Holding Button(Event Player, Button(Secondary Fire));
+		Wait Until(!Global.current_boss.boss_using_se, 99999);
+		Stop Holding Button(Event Player, Button(Secondary Fire));
+	}
+}
+
+rule("boss大锤dummy 左键")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 2;
+		Reinhardt;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Dummy Bot(Event Player) == True;
+		Global.current_boss.boss_using_pr == True;
+		Global.boss_choosing_hero != True;
+		Slot Of(Event Player) != 0;
+	}
+
+	actions
+	{
+		Start Forcing Player Position(Event Player, Global.current_boss, True);
+		Set Facing(Event Player, Global.direction_12[Slot Of(Event Player) % 12], To World);
+		Wait Until(Angle Between Vectors(Facing Direction Of(Event Player), Global.direction_12[Slot Of(Event Player) % 12]) <= 1, 1);
+		Start Facing(Event Player, Left, 10000, To Player, Direction and Turn Rate);
+		Set Damage Dealt(Event Player, 100);
+		Start Holding Button(Event Player, Button(Primary Fire));
+		Wait Until(!Global.current_boss.boss_using_pr, 99999);
+		Stop Holding Button(Event Player, Button(Primary Fire));
+		Set Damage Dealt(Event Player, 150);
+	}
+}
+
+rule("bossDVA all 初始化")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 2;
+		D.Va;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Global.boss_choosing_hero != True;
+		Slot Of(Event Player) != 0;
+	}
+
+	actions
+	{
+		Wait(1, Ignore Condition);
+		Start Facing(Event Player, Direction From Angles(Horizontal Facing Angle Of(Global.current_boss) + (
+			Global.current_boss.boss_dummy_angle * (Slot Of(Event Player) % 11) - Global.current_boss.boss_dummy_angle * 10 / 2),
+			Vertical Facing Angle Of(Global.current_boss)), 10000, To World, Direction and Turn Rate);
+		Attach Players(Event Player, Global.current_boss, Vector(0, 0, 0));
+		disabled Start Facing(Event Player, Direction Towards(Event Player, Players In Slot(Slot Of(Event Player) % 10, Opposite Team Of(Team Of(
+			Event Player))) != 0 ? Players In Slot(Slot Of(Event Player) % 10, Opposite Team Of(Team Of(Event Player)))
+			: Random Value In Array(All Players(Opposite Team Of(Team Of(Event Player))))), 10000, To World, Direction and Turn Rate);
+	}
+}
+
+rule("bossDVA slot 初始化")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 2;
+		Slot 0;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Global.boss_choosing_hero != True;
+		Hero Of(Event Player) == Hero(D.Va);
+	}
+
+	actions
+	{
+		Wait(1, Ignore Condition);
+		disabled Create HUD Text(Event Player, Custom String("当前模式：{0}", Global.dva_string), Null, Null, Top, 0, Global.dva_string_color, Color(
+			White), Color(White), Visible To String and Color, Default Visibility);
+		Set Invisible(Global.boss_dummy_robots, All);
+		Disallow Button(Event Player, Button(Ultimate));
+		Event Player.boss_dummy_angle = 8;
+	}
+}
+
+rule("bossDVA左键")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 2;
+		Slot 0;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Hero Of(Event Player) == Hero(D.Va);
+		Is Firing Primary(Event Player) == True;
+		Global.boss_choosing_hero != True;
+		Is Using Ability 1(Event Player) != True;
+	}
+
+	actions
+	{
+		Set Move Speed(Event Player, 167);
+		Wait Until(!Is Firing Primary(Event Player) || Is Using Ability 1(Event Player), 99999);
+		Set Move Speed(Event Player, 100);
+	}
+}
+
+rule("bossDVA右键")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 2;
+		All;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Hero Of(Event Player) == Hero(D.Va);
+		Is Firing Secondary(Event Player) == True;
+		Global.boss_choosing_hero != True;
+		Ability Resource(Event Player, Button(Secondary Fire)) <= 5;
+	}
+
+	actions
+	{
+		Set Ability Resource(Event Player, Button(Secondary Fire), 100);
+	}
+}
+
+rule("bossDVAQ")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 2;
+		Slot 0;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Global.boss_choosing_hero != True;
+		Is Button Held(Event Player, Button(Ultimate)) == True;
+		Ultimate Charge Percent(Event Player) >= 100;
+		Hero Of(Event Player) == Hero(D.Va);
+	}
+
+	actions
+	{
+		Set Ultimate Charge(Event Player, 0);
+		Event Player.boss_using_ultim = True;
+		Set Ultimate Ability Enabled(Event Player, False);
+		Wait Until(Is True For All(Array Slice(Global.boss_dummy_robots, 1, 11), Is Using Ultimate(Current Array Element)), 20);
+		Wait Until(Is True For All(Global.boss_dummy_robots, !Is Using Ultimate(Current Array Element)), 20);
+		Set Ultimate Charge(Event Player, 0);
+		Event Player.boss_using_ultim = False;
+		Set Ultimate Ability Enabled(Event Player, True);
+	}
+}
+
+rule("bossDVAdummy 左键")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 2;
+		D.Va;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Dummy Bot(Event Player) == True;
+		Slot Of(Event Player) != 0;
+		Global.boss_choosing_hero != True;
+		Is Firing Primary(Global.current_boss) == True;
+		Is In Alternate Form(Event Player) != True;
+	}
+
+	actions
+	{
+		Start Holding Button(Event Player, Button(Primary Fire));
+		Wait Until(!Is Firing Primary(Global.current_boss) || Is In Alternate Form(Event Player), 99999);
+		Stop Holding Button(Event Player, Button(Primary Fire));
+	}
+}
+
+rule("bossDVAdummy 右键")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 2;
+		D.Va;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Dummy Bot(Event Player) == True;
+		Global.boss_choosing_hero != True;
+		Slot Of(Event Player) != 0;
+		Is Firing Secondary(Global.current_boss) == True;
+		Is In Alternate Form(Event Player) != True;
+	}
+
+	actions
+	{
+		Start Holding Button(Event Player, Button(Secondary Fire));
+		Wait Until(!Is Firing Secondary(Global.current_boss) || Is In Alternate Form(Event Player), 99999);
+		Stop Holding Button(Event Player, Button(Secondary Fire));
+	}
+}
+
+rule("bossDVAdummy E")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 2;
+		D.Va;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Dummy Bot(Event Player) == True;
+		Slot Of(Event Player) != 0;
+		Global.boss_choosing_hero != True;
+		Is Using Ability 2(Global.current_boss) == True;
+		Is In Alternate Form(Event Player) != True;
+	}
+
+	actions
+	{
+		Press Button(Event Player, Button(Ability 2));
+	}
+}
+
+rule("bossDVAdummy Q")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 2;
+		D.Va;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Dummy Bot(Event Player) == True;
+		Slot Of(Event Player) != 0;
+		Global.boss_choosing_hero != True;
+		Is In Alternate Form(Event Player) != True;
+		Slot Of(Event Player) != 1;
+		Global.current_boss.boss_using_ultim == True;
+	}
+
+	actions
+	{
+		Press Button(Event Player, Button(Ability 1));
+		Wait(0.016, Ignore Condition);
+		Set Ultimate Charge(Event Player, 100);
+		Detach Players(Event Player);
+		Press Button(Event Player, Button(Ultimate));
+	}
+}
+
+rule("bossDVAdummy Q")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 2;
+		D.Va;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Dummy Bot(Event Player) == True;
+		Slot Of(Event Player) != 0;
+		Global.boss_choosing_hero != True;
+		Is In Alternate Form(Event Player) == True;
+		Is On Ground(Event Player) == True;
+	}
+
+	actions
+	{
+		Set Ultimate Charge(Event Player, 100);
+		Wait(2, Ignore Condition);
+		Press Button(Event Player, Button(Ultimate));
+		Attach Players(Event Player, Global.current_boss, Vector(0, 0, 0));
+	}
+}
+
+rule("bossDVAdummy time Q")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 2;
+		D.Va;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Dummy Bot(Event Player) == True;
+		Global.boss_choosing_hero != True;
+		Is In Alternate Form(Event Player) != True;
+		Slot Of(Event Player) == 1;
+	}
+
+	actions
+	{
+		Wait(5, Ignore Condition);
+		Detach Players(Event Player);
+		Set Ultimate Charge(Event Player, 100);
+		Press Button(Event Player, Button(Ultimate));
+	}
+}
+
+rule("bossDVA exchange mode")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 2;
+		Slot 0;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Global.boss_choosing_hero != True;
+		Hero Of(Event Player) == Hero(D.Va);
+		Is Button Held(Event Player, Button(Crouch)) == True;
+	}
+
+	actions
+	{
+		If(Event Player.boss_dummy_angle != 0);
+			Event Player.boss_dummy_angle = 0;
+			Global.dva_string = Custom String("核聚变");
+		Else;
+			Event Player.boss_dummy_angle = 8;
+			Global.dva_string = Custom String("核裂变");
+		End;
+		Wait(0.500, Ignore Condition);
+		Wait Until(!Is Button Held(Event Player, Button(Crouch)), 5);
+	}
+}
+
+rule("bossDVA dummy exchange mode")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 2;
+		D.Va;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Global.boss_choosing_hero != True;
+		Hero Of(Event Player) == Hero(D.Va);
+		Global.current_boss.boss_dummy_angle == 0;
+		Slot Of(Event Player) != 0;
+	}
+
+	actions
+	{
+		Start Facing(Event Player, Facing Direction Of(Global.current_boss), 10000, To World, Direction and Turn Rate);
+		Global.dva_string_color = Custom Color(0, 63, 52, 255);
+	}
+}
+
+rule("bossDVA dummy exchange mode")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 2;
+		D.Va;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Global.boss_choosing_hero != True;
+		Hero Of(Event Player) == Hero(D.Va);
+		Global.current_boss.boss_dummy_angle != 0;
+		Slot Of(Event Player) != 0;
+	}
+
+	actions
+	{
+		Start Facing(Event Player, Direction From Angles(Horizontal Facing Angle Of(Global.current_boss) + (
+			Global.current_boss.boss_dummy_angle * (Slot Of(Event Player) % 11) - Global.current_boss.boss_dummy_angle * 10 / 2),
+			Vertical Facing Angle Of(Global.current_boss)), 10000, To World, Direction and Turn Rate);
+		disabled Start Facing(Event Player, Direction Towards(Event Player, Players In Slot(Slot Of(Event Player) % 10, Opposite Team Of(Team Of(
+			Event Player))) != 0 ? Players In Slot(Slot Of(Event Player) % 10, Opposite Team Of(Team Of(Event Player)))
+			: Random Value In Array(All Players(Opposite Team Of(Team Of(Event Player))))), 10000, To World, Direction and Turn Rate);
+		Global.dva_string_color = Custom Color(255, 192, 203, 255);
+	}
+}
+
+rule("bossDVA killed")
+{
+	event
+	{
+		Ongoing - Each Player;
+		Team 2;
+		Slot 0;
+	}
+
+	conditions
+	{
+		Is Game In Progress == True;
+		Is Alive(Event Player) == True;
+		Global.boss_choosing_hero != True;
+		Hero Of(Event Player) == Hero(D.Va);
+		Is In Alternate Form(Event Player) == True;
+	}
+
+	actions
+	{
+		Set Team Score(Opposite Team Of(Team Of(Event Player)), Team Score(Opposite Team Of(Team Of(Event Player))) + 1);
+		Kill(Event Player, All Players(Opposite Team Of(Team Of(Event Player))));
+	}
+}
